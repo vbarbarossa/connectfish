@@ -47,6 +47,3 @@ tab <- lapply(seq_along(lst),function(i){
 
 write.csv(tab,paste0('proc/hybas12_tedesco.csv'),row.names = F)
 
-
-
-

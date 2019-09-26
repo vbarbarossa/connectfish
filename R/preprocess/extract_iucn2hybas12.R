@@ -30,14 +30,15 @@ lst <- st_contains(sp,points,sparse = T)
 # for each species, create a table with hybasID and species id_no
 
 # should update this part using dplyr as in extract_customRanges2hybas12.R
-tab <- do.call('rbind',
-               parallel::mclapply(seq_along(lst),function(i){
-                 hybasIDs <- points$HYBAS_ID[lst[[i]]]
-                 return(
-                   cbind(data.frame(HYBAS_ID = hybasIDs),
-                         do.call("rbind", replicate(length(hybasIDs),as.data.frame(sp[i,])[,1:(ncol(sp)-3)], simplify = FALSE)))
-                 )
-               },mc.cores = NC)
-)
+tab <- lapply(seq_along(lst),function(i){
+  hb <- points$HYBAS_ID[lst[[i]]]
+  if(length(hb) > 0){
+    return(
+      data.frame(HYBAS_ID = hb,
+                 binomial = sp$binomial[i])
+    )
+  }
+}
+) %>% do.call('rbind',.) %>% distinct()
 
-write.csv(tab,'HydroBASINS/hybas12_fish.csv',row.names = F)
+write.csv(tab,'proc/hybas12_fish.csv',row.names = F)
