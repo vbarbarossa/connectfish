@@ -6,3 +6,5 @@ old
 proc
 tabs
 *.sh
+.Rproj.user
+*.Rproj
