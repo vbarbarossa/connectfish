@@ -17,9 +17,9 @@ sp <- rbind(read_sf(file_iucn_fish1),read_sf(file_iucn_fish2))
 #filter out occurrence records not wanted here
 sp <- sp[sp$presence %in% c(1,2),]
 
-# filter out lentic species
-habitat <- read.csv(file_iucn_habitat_type)
-sp <- sp[sp$binomial %in% habitat$binomial[habitat$lotic == 1],]
+# filter out lentic species <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< this step should be done afterwards so that we have an overall table of species first
+# habitat <- read.csv(file_iucn_habitat_type)
+# sp <- sp[sp$binomial %in% habitat$binomial[habitat$lotic == 1],]
 
 # reference to hydrobasins level 12
 lst <- st_contains(sp,points,sparse = T)

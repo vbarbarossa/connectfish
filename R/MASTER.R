@@ -3,7 +3,6 @@ source('R/functions.R')
 # number of cores available on the machine
 NC = 22
 
-
 ### list of directories ### <<<<<<<<<--------- TO MODIFY ACCORDINGLY
 dir_figs <- dir_('figs/')
 
@@ -13,7 +12,7 @@ dir_tabs <- dir_('tabs/')
 dir_proc <- dir_('proc/')
 
 # packages needed
-library(sf); library(foreach); library(rfishbase); library(data.table); library(ggplot2); library(viridis); library(dplyr)
+library(sf); library(foreach); library(rfishbase); library(data.table); library(ggplot2); library(viridis); library(dplyr); library(vroom)
 # not fully loaded: foreign, rnaturalearth,
 
 # location of hydrobasins shapefiles
@@ -31,6 +30,9 @@ file_iucn_habitat_type <- 'data/iucn_habitat_type.csv' # from fishsuit
 # custom ranges data
 file_custom_ranges <- '../occ2range4fish/out/custom_ranges_poly.gpkg'
 file_custom_ranges_habitat_type <- '../occ2range4fish/out/custom_ranges_habitatFishbase.csv'
+# set minimum no. occurrence records used to select the species from the custom ranges dataset
+min_no_occ = 0
+
 
 # dams data
 # data is freely accessible @
@@ -42,3 +44,5 @@ file_frhed_dams <- 'data/17_0116_future_dams_update_final_v2.csv'
 dir_ted_bas <- '../data/Tedesco/'
 
 
+# for plotting maps
+crs_custom <- "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
