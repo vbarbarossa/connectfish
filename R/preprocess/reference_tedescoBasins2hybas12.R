@@ -27,7 +27,7 @@ ted <- read_sf(paste0(dir_ted_bas,'Basin042017_3119.shp')) %>%
   select(BasinName,Country,Ecoregion,Endorheic,no_species,geometry)
 
 # intersect with Hybas12
-lst <- st_contains(ted[1:100,],points,sparse = T)
+lst <- st_contains(ted,points,sparse = T)
 
 tab <- lapply(seq_along(lst),function(i){
   hb <- points$HYBAS_ID[lst[[i]]]
