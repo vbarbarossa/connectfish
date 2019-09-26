@@ -29,6 +29,7 @@ lst <- st_contains(sp,points,sparse = T)
 # loop through the species
 # for each species, create a table with hybasID and species id_no
 
+# should update this part using dplyr as in extract_customRanges2hybas12.R
 tab <- do.call('rbind',
                parallel::mclapply(seq_along(lst),function(i){
                  hybasIDs <- points$HYBAS_ID[lst[[i]]]
@@ -36,7 +37,7 @@ tab <- do.call('rbind',
                    cbind(data.frame(HYBAS_ID = hybasIDs),
                          do.call("rbind", replicate(length(hybasIDs),as.data.frame(sp[i,])[,1:(ncol(sp)-3)], simplify = FALSE)))
                  )
-               },mc.cores = 20)
+               },mc.cores = NC)
 )
 
 write.csv(tab,'HydroBASINS/hybas12_fish.csv',row.names = F)

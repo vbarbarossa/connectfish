@@ -1,7 +1,10 @@
 source('R/functions.R')
 
-### list of directories ### <<<<<<<<<--------- TO MODIFY ACCORDINGLY
+# number of cores available on the machine
+NC = 22
 
+
+### list of directories ### <<<<<<<<<--------- TO MODIFY ACCORDINGLY
 dir_figs <- dir_('figs/')
 
 dir_tabs <- dir_('tabs/')
@@ -16,7 +19,7 @@ library(sf); library(foreach); library(rfishbase); library(data.table); library(
 # location of hydrobasins shapefiles
 # data is freely accessible @ https://hydrosheds.org/downloads
 # the entire dataset is needed (divided in custom continents 'af','ar','as','au','eu','gr','na','sa','si')
-dir_hybas12 <- '/vol/milkunarc/vbarbarossa/data/HydroBASINS/global_lev12'
+dir_hybas12 <- '../data/HydroBASINS/global_lev12'
 
 # IUCN data
 # data is freely accessible @ https://www.iucnredlist.org/resources/spatial-data-download
