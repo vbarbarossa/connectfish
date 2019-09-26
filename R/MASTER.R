@@ -38,6 +38,7 @@ file_grand_dams <- 'data/GRanD_Version_1_3/GRanD_dams_v1_3.shp'
 file_good2_dams <- 'data/GOOD2_unsnapped/GOOD2_unsnapped.shp'
 file_frhed_dams <- 'data/17_0116_future_dams_update_final_v2.csv'
 
-
+# Tedesco et al. basins shapefile (only for comparison in reference_tedescoBasins2hybas12.R)
+dir_ted_bas <- '../data/Tedesco/'
 
 

@@ -34,10 +34,14 @@ lst <- st_contains(sp,points,sparse = T)
 # for each species, create a table with hybasID and species id_no
 
 tab <- lapply(seq_along(lst),function(i){
-  return(
-    data.frame(HYBAS_ID = points$HYBAS_ID[lst[[i]]],
-               binomial = sp$name[i])
-  )}
+  hb <- points$HYBAS_ID[lst[[i]]]
+  if(length(hb) > 0){
+    return(
+      data.frame(HYBAS_ID = hb,
+                 binomial = sp$name[i])
+    )
+  }
+}
 ) %>% do.call('rbind',.) %>% distinct()
 
-write.csv(tab,paste0('HydroBASINS/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),row.names = F)
+write.csv(tab,paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),row.names = F)
