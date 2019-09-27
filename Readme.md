@@ -10,8 +10,8 @@
 4. **georeference_dams.R**
 
 ## Main
-- **calcuate_ci.R** calculates species-specific Connectivity Index (CI)
+- **calcuate_ci.R** calculates species-specific Connectivity Index (CI) for diadromous and non-diadromous species
 - **calculate_ci_min10k.R** calculate_ci for basins smaller than 10k km2
-- **functions.R** set of functions for calculate_ci
+- **functions.R** set of generic functions
 
 ## Figures
