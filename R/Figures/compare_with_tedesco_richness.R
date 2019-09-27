@@ -39,7 +39,7 @@ tab_sf <- inner_join(read_sf(paste0(dir_ted_bas,'Basin042017_3119.shp')),tab) %>
 
 tab_sf$ratio[tab_sf$ratio > 100] <- 100
 
-# plot the ratio
+# plot the ratio-------------------------------------------------------------------------------------
 world <- rnaturalearth::ne_countries(returnclass = "sf")
 bb <- rnaturalearth::ne_download(type = "wgs84_bounding_box", category = "physical",
                                  returnclass = "sf")
@@ -64,11 +64,11 @@ p <- ggplot() +
         legend.title = element_blank()
   )
 
-ggsave('figs/Figure_SI_compare_total_basin_richness_with_tedesco.jpg',p,
+ggsave(paste0('figs/Figure_SI_compare_total_basin_richness_with_tedesco_oth',min_no_occ,'.jpg'),p,
        width = 220,height = 130,units = 'mm',dpi = 600,type = 'cairo')
 
 
-# plot also only IUCN coverage
+# plot also only IUCN coverage------------------------------------------------------------------------
 ranges <- iucn
 
 # merge with tedesco data HYBAS_ID,BasinName
