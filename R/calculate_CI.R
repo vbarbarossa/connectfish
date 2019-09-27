@@ -1,13 +1,15 @@
 source('R/MASTER.R')
 
-### HydroBASINS data ##################################################################
+# HydroBASINS data ------------------------------------------------------------------------------------------
+cat('\nReading hydrobasins data..')
 if(file.exists('proc/hybas12poly_global_w_area_main.rds')){
   hb_data <- readRDS('proc/hybas12poly_global_w_area_main.rds')
 }else{
   # read hydrobasins data
-  hb_data <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combine = 'rbind') %do% st_read(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp'))
+  hb_data <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combine = 'rbind') %do% read_sf(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp'))
   # add basin area
   # main_bas_area <- do.call('rbind',lapply(split(hb_data_frame,hb_data_frame$MAIN_BAS),function(x) data.frame(MAIN_BAS = unique(x$MAIN_BAS),MAIN_BAS_AREA = sum(x$SUB_AREA))))
+  cat('\nCompiling main basin area..')
   main_bas_area <- hb_data %>%
     as_tibble() %>%
     select(HYBAS_ID,MAIN_BAS,SUB_AREA) %>%
@@ -32,13 +34,22 @@ if(file.exists('proc/hybas12poly_global_w_area_main.rds')){
 # plot(ecdf(hb_data$SUB_AREA))
 # hist(hb_data$SUB_AREA[hb_data$SUB_AREA < 1000],breaks = seq(0,1000,100))
 
-### load Fishbase metadata <<<<<<<<<<<< FIX simply load entire fishbase table? And use synonyms tables?
-fishbase <- read.csv('proc/iucn_fishbase.csv')
-fishbase <- fishbase[!duplicated(fishbase$iucn_name),]
-levels(fishbase$AnaCat) <- c(NA,rep('Diad.',5),'Non.','Ocea.','Pota.')
-table(fishbase$AnaCat)
+# select diadromous and non-diadromous species------------------------------------------------------------
 
-### Species rage data ##################################################################
+cat('\nRetrieving diadromous species from fishbase..')
+
+# load fishbase metadata
+fishbase <- taxonomy() %>% # get all species available (vector)
+  species(.,fields = c('Species','AnaCat')) %>% # get species table for all species
+  rename(binomial = Species)
+
+fishbase$AnaCat <- as.factor(fishbase$AnaCat) 
+levels(fishbase$AnaCat) <- c(rep('Diad.',6),'Non.','Ocea.','Ocea.','Pota.','Pota.')
+# table(fishbase$AnaCat)
+
+# Species rage data --------------------------------------------------------------------------------------
+
+cat('\nReading hydrobasins data..')
 
 sp_data <- bind_rows(
   # read hybas12 on IUCN
@@ -47,22 +58,16 @@ sp_data <- bind_rows(
   vroom(paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),delim = ',')
 ) %>%
   left_join(.,hb_data %>% select(HYBAS_ID,MAIN_BAS,SUB_AREA,MAIN_BAS_AREA),by="HYBAS_ID")
-# length(unique(sp_data$binomial))
-# [1] 5638
-# length(unique(sp_data$binomial[sp_data$marine == 't']))
-# [1] 551
-# 5638-551
-# [1] 5087
 
 # assign diadromous-non diadromous category
 sp_data$diad <- 'f'
-sp_data$diad[sp_data$binomial %in% fishbase$iucn_name[fishbase$AnaCat == 'Diad.']] <- 't'
+sp_data$diad[sp_data$binomial %in% fishbase$binomial[fishbase$AnaCat == 'Diad.']] <- 't'
 
-### Dams data ##########################################################################
+# Dams data ---------------------------------------------------------------------------------------------
 dams_cur <- readRDS('proc/dams_current_hydrobasins.rds')
 dams_fut <- readRDS('proc/dams_future_hydrobasins.rds')
 
-### FUNCTION TO FIND UPSTREAM IDs ##########################################################
+# FUNCTION TO FIND UPSTREAM IDs -------------------------------------------------------------------------
 
 # new column for master_table with concatenated next downstream ID
 next_down <- function(tab){
@@ -106,7 +111,7 @@ find_upstream_ids <- function(t,IDs){
   return(l)
 }
 
-### FUNCTION THAT CALCULATES CI PER MAIN BASIN ############################################################
+# FUNCTION THAT CALCULATES CI PER MAIN BASIN ------------------------------------------------------------------
 
 # Danube 2120008490
 
@@ -241,13 +246,19 @@ basin_connectivity <- function(main_bas_id){
   
 }
 
+# execution in parallel---------------------------------------------------------------------------------------------
+
+cat('\nCalculating CI..\n\n')
+
 global_tab <- do.call('rbind',
                       parallel::mclapply(
                         unique(sp_data$MAIN_BAS[sp_data$MAIN_BAS_AREA >= 10000]),
                         basin_connectivity,
-                        mc.cores = 5
+                        mc.cores = NC
                       ))
 
 warnings()
+
+cat('\nSaving CI table..\n\n')
 
 saveRDS(global_tab,'proc/CI_tab_global.rds')
