@@ -7,10 +7,14 @@ if(file.exists('proc/hybas12poly_global_w_area_main.rds')){
   # read hydrobasins data
   hb_data <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combine = 'rbind') %do% st_read(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp'))
   # add basin area
-  hb_data_frame <- as.data.frame(hb_data)[,-ncol(hb_data)]
-  main_bas_area <- do.call('rbind',lapply(split(hb_data_frame,hb_data_frame$MAIN_BAS),function(x) data.frame(MAIN_BAS = unique(x$MAIN_BAS),MAIN_BAS_AREA = sum(x$SUB_AREA))))
+  # main_bas_area <- do.call('rbind',lapply(split(hb_data_frame,hb_data_frame$MAIN_BAS),function(x) data.frame(MAIN_BAS = unique(x$MAIN_BAS),MAIN_BAS_AREA = sum(x$SUB_AREA))))
+  main_bas_area <- hb_data %>%
+    as_tibble() %>%
+    select(HYBAS_ID,MAIN_BAS,SUB_AREA) %>%
+    group_by(MAIN_BAS) %>%
+    summarize(MAIN_BAS_AREA = sum(SUB_AREA))
   
-  hb_data <- merge(hb_data,main_bas_area,by='MAIN_BAS')
+  hb_data <- inner_join(hb_data,main_bas_area,by='MAIN_BAS')
   # save as rds
   saveRDS(hb_data,'proc/hybas12poly_global_w_area_main.rds')
 }
@@ -28,16 +32,21 @@ if(file.exists('proc/hybas12poly_global_w_area_main.rds')){
 # plot(ecdf(hb_data$SUB_AREA))
 # hist(hb_data$SUB_AREA[hb_data$SUB_AREA < 1000],breaks = seq(0,1000,100))
 
-### load Fishbase metadta
+### load Fishbase metadata <<<<<<<<<<<< FIX simply load entire fishbase table? And use synonyms tables?
 fishbase <- read.csv('proc/iucn_fishbase.csv')
 fishbase <- fishbase[!duplicated(fishbase$iucn_name),]
 levels(fishbase$AnaCat) <- c(NA,rep('Diad.',5),'Non.','Ocea.','Pota.')
 table(fishbase$AnaCat)
 
-### IUCN Species data ##################################################################
-library(data.table)
-sp_data <- readRDS('data/hybas12_fish.rds')
-sp_data <- merge(sp_data,as.data.frame(hb_data[,c("HYBAS_ID","MAIN_BAS","SUB_AREA","MAIN_BAS_AREA")])[,-5],by="HYBAS_ID")
+### Species rage data ##################################################################
+
+sp_data <- bind_rows(
+  # read hybas12 on IUCN
+  vroom('proc/hybas12_fish.csv',delim = ','),
+  # read hybas12 on customRanges
+  vroom(paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),delim = ',')
+) %>%
+  left_join(.,hb_data %>% select(HYBAS_ID,MAIN_BAS,SUB_AREA,MAIN_BAS_AREA),by="HYBAS_ID")
 # length(unique(sp_data$binomial))
 # [1] 5638
 # length(unique(sp_data$binomial[sp_data$marine == 't']))
