@@ -3,6 +3,11 @@ source('R/MASTER.R')
 #-------------------------------------------------------------------------
 #>> Dams data
 
+#NID
+NID <- foreach(f = list.files(dir_NID_dams,full.names = T),.combine = 'rbind') %do% openxlsx::read.xlsx(f) %>%
+  as_tibble() %>%
+  st_as_sf(dams_fut,coords = c('Lon_2016','Lat_2016'),crs=4326)
+
 #GRanD v1.3
 grand <- st_read(file_grand_dams) #7,320
 # GOOD2 unsnapped
