@@ -16,18 +16,26 @@ if(file.exists('proc/hybas12_points_nolakes.gpkg')){
 
 # load habitat data
 # habitat <- read.csv(file_custom_ranges_habitat_type)
+
+# determine species to exclude because already in iucn database------------------------
 # load IUCN data
 iucn <- rbind(read_sf(file_iucn_fish1),read_sf(file_iucn_fish2))
+# load synonyms table
+synonyms_table <- vroom(list.files(dir_synonyms_table,full.names = T),delim=',') %>%
+  filter(name_iucn %in% iucn$binomial)
+# exclude names in iucn data and names in fishbase that are synonyms for iucn
+names_to_exclude <- unique(c(iucn$binomial,synonyms_table$name_src))
+
 
 # loop through multiple thresholds
-for(th in c(0,1,2,5,10,20,50,100)){
+for(th in c(0,2,5,10,20,50,100)){
   min_no_occ <- th
   
   # load species shapefile and filter
   sp <- read_sf(file_custom_ranges) %>%
     filter(no_occ >= min_no_occ) %>% #filter out based on no_occ threshold
     # filter(!name %in% unique(as.character(habitat$name[habitat$OnlyLake == -1]))) %>% # filter out exclusively lentic species <<< should be done later on to have a full comparison with Tedesco data
-    filter(!name %in% unique(as.character(iucn$binomial))) # filter out species already covered in the IUCN dataset
+    filter(!name %in% names_to_exclude) # filter out species already covered in the IUCN dataset
   
   # reference to hydrobasins level 12
   lst <- st_contains(sp,points,sparse = T)
