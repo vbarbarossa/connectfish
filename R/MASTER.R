@@ -15,6 +15,9 @@ dir_proc <- dir_('proc/')
 library(sf); library(foreach); library(rfishbase); library(data.table); library(ggplot2); library(viridis); library(dplyr); library(vroom)
 # not fully loaded: foreign, rnaturalearth,
 
+# set fishbase version
+options(FISHBASE_VERSION="19.04")
+
 # location of hydrobasins shapefiles
 # data is freely accessible @ https://hydrosheds.org/downloads
 # the entire dataset is needed (divided in custom continents 'af','ar','as','au','eu','gr','na','sa','si')
@@ -43,6 +46,8 @@ file_frhed_dams <- 'data/17_0116_future_dams_update_final_v2.csv'
 # Tedesco et al. basins shapefile (only for comparison in reference_tedescoBasins2hybas12.R)
 dir_ted_bas <- '../data/Tedesco/'
 
+# synonyms table
+dir_synonyms_table <- '../occ2range4fish/proc/iucn_synonyms/'
 
 # for plotting maps
 crs_custom <- "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
