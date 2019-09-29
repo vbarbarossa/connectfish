@@ -21,6 +21,11 @@ if(file.exists('proc/hybas12poly_global_w_area_main.rds')){
   saveRDS(hb_data,'proc/hybas12poly_global_w_area_main.rds')
 }
 
+# why should keep the sf attributes?
+hb_data <- hb_data %>%
+  as_tibble() %>%
+  select(-geometry)
+
 # # n
 # length(unique(hb_data$HYBAS_ID))
 # # 1034083
@@ -57,7 +62,7 @@ sp_data <- bind_rows(
   # read hybas12 on customRanges
   vroom(paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),delim=',')
 ) %>%
-  inner_join(.,hb_data %>% as_tibble() %>% select(HYBAS_ID,MAIN_BAS,SUB_AREA,MAIN_BAS_AREA),by="HYBAS_ID") %>%
+  inner_join(.,hb_data %>% select(HYBAS_ID,MAIN_BAS,SUB_AREA,MAIN_BAS_AREA),by="HYBAS_ID") %>%
   as.data.table(.)
 
 # assign diadromous-non diadromous category
@@ -147,7 +152,7 @@ basin_connectivity <- function(main_bas_id){
     dfut <- dfut[order(dfut$PFAF_ID.x,decreasing = T),]
     
     # find upstrea IDs of each dam
-    upstream_list <- find_upstream_ids(t=as.data.frame(sbas[,c('HYBAS_ID','NEXT_DOWN')])[,-3], #removed the geom column
+    upstream_list <- find_upstream_ids(t=sbas %>% select(HYBAS_ID,NEXT_DOWN), #removed the geom column
                                        IDs=dfut$HYBAS_ID) # dfut has both cur and fut
     # create ID groups from most upstream to downstream
     # exclude IDs in downstream groups already present in upstream groups
@@ -254,23 +259,26 @@ basin_connectivity <- function(main_bas_id){
 # execution in parallel---------------------------------------------------------------------------------------------
 
 # st <- Sys.time()
-# for(i in 10:100){
-#   basin_connectivity(unique(sp_data$MAIN_BAS[sp_data$MAIN_BAS_AREA < 10000])[12*i])
-#   print(i)
-# }
+mbids <- unique(sp_data$MAIN_BAS[sp_data$MAIN_BAS_AREA < 10000])
+global_tab <- list()
+for(i in seq_along(mbids)) {
+  global_tab[[i]] <- basin_connectivity(mbids[i])
+  print(i)
+}
+global_tab <- do.call('rbind',global_tab)
 # Sys.time() - st
 
-cat('\nCalculating CI..\n\n')
-
-global_tab <- do.call('rbind',
-                      parallel::mclapply(
-                        unique(sp_data$MAIN_BAS[sp_data$MAIN_BAS_AREA >= 10000]),
-                        basin_connectivity,
-                        mc.cores = NC
-                      ))
-
-warnings()
-
-cat('\nSaving CI table..\n\n')
+# cat('\nCalculating CI..\n\n')
+# 
+# global_tab <- do.call('rbind',
+#                       parallel::mclapply(
+#                         unique(sp_data$MAIN_BAS[sp_data$MAIN_BAS_AREA >= 10000]),
+#                         basin_connectivity,
+#                         mc.cores = NC
+#                       ))
+# 
+# warnings()
+# 
+# cat('\nSaving CI table..\n\n')
 
 saveRDS(global_tab,'proc/CI_tab_global_min10k.rds')
