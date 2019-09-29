@@ -261,7 +261,7 @@ basin_connectivity <- function(main_bas_id){
 # st <- Sys.time()
 mbids <- unique(sp_data$MAIN_BAS[sp_data$MAIN_BAS_AREA >= 10000])
 global_tab <- foreach(i = seq_along(mbids),.combine = 'rbind') %do% {
-  basin_connectivity(unique(sp_data$MAIN_BAS[sp_data$MAIN_BAS_AREA < 10000])[i])
+  basin_connectivity(mbids[i])
   print(i)
 }
 # Sys.time() - st
