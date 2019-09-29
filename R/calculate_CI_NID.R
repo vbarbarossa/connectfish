@@ -35,11 +35,12 @@ cat('\nReading species data..')
 
 sp_data <- bind_rows(
   # read hybas12 on IUCN
-  vroom('proc/hybas12_fish.csv',delim = ','),
+  vroom('proc/hybas12_fish.csv',delim=','),
   # read hybas12 on customRanges
-  vroom(paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),delim = ',')
+  vroom(paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),delim=',')
 ) %>%
-  inner_join(.,hb_data %>% select(HYBAS_ID,MAIN_BAS,SUB_AREA,MAIN_BAS_AREA),by="HYBAS_ID")
+  inner_join(.,hb_data %>% as_tibble() %>% select(HYBAS_ID,MAIN_BAS,SUB_AREA,MAIN_BAS_AREA),by="HYBAS_ID") %>%
+  as.data.table(.)
 
 # assign diadromous-non diadromous category
 sp_data$diad <- 'f'
