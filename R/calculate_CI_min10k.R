@@ -53,11 +53,12 @@ cat('\nReading hydrobasins data..')
 
 sp_data <- bind_rows(
   # read hybas12 on IUCN
-  vroom('proc/hybas12_fish.csv',delim = ','),
+  vroom('proc/hybas12_fish.csv',delim=','),
   # read hybas12 on customRanges
-  vroom(paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),delim = ',')
+  vroom(paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),delim=',')
 ) %>%
-  left_join(.,hb_data %>% select(HYBAS_ID,MAIN_BAS,SUB_AREA,MAIN_BAS_AREA),by="HYBAS_ID")
+  inner_join(.,hb_data %>% as_tibble() %>% select(HYBAS_ID,MAIN_BAS,SUB_AREA,MAIN_BAS_AREA),by="HYBAS_ID") %>%
+  as.data.table(.)
 
 # assign diadromous-non diadromous category
 sp_data$diad <- 'f'
@@ -117,8 +118,10 @@ find_upstream_ids <- function(t,IDs){
 
 basin_connectivity <- function(main_bas_id){
   
-  sbas <- hb_data[hb_data$MAIN_BAS == main_bas_id,]
-  sbas_sp <- sp_data[sp_data$MAIN_BAS == main_bas_id,]
+  sbas <- hb_data%>%
+    filter(MAIN_BAS == main_bas_id)
+  sbas_sp <- sp_data %>%
+    filter(MAIN_BAS == main_bas_id)
   
   # select dams for the current basin
   dcur <- merge(sbas,dams_cur,by='HYBAS_ID')
@@ -241,12 +244,21 @@ basin_connectivity <- function(main_bas_id){
     }
   }
   
-  return(tab)
+  print(main_bas_id)
   
+  return(tab)
   
 }
 
+
 # execution in parallel---------------------------------------------------------------------------------------------
+
+# st <- Sys.time()
+# for(i in 10:100){
+#   basin_connectivity(unique(sp_data$MAIN_BAS[sp_data$MAIN_BAS_AREA < 10000])[12*i])
+#   print(i)
+# }
+# Sys.time() - st
 
 cat('\nCalculating CI..\n\n')
 
