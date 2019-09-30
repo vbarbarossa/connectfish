@@ -28,7 +28,7 @@ names_to_exclude <- unique(c(iucn$binomial,synonyms_table$name_src))
 
 
 # loop through multiple thresholds
-for(th in c(0,2,5,10,20,50,100)){
+for(th in c(1,2,10,20,30,50,100)){
   min_no_occ <- th
   
   # load species shapefile and filter
