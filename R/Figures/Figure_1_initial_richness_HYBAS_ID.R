@@ -4,27 +4,39 @@ crs_custom <- "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +uni
 
 # hybas12 data
 hb_data <- readRDS('proc/hybas12poly_global_w_area_main.rds')
-# extract main_bas_area per MAIN_BAS
-# hb <- as.data.table(hb_data)
-# hb <- hb[,-15]
-# main_bas_area <- do.call('rbind',lapply(split(hb,hb$MAIN_BAS),function(x) data.frame(MAIN_BAS = x$MAIN_BAS[1], MAIN_BAS_AREA = x$MAIN_BAS_AREA[1])))
 
-# species data on hybas12
-if(file.exists('proc/hybas12_fish_w_area.rds')){
-  sp_data <- readRDS('proc/hybas12_fish_w_area.rds')
-}else{
-  sp_data <- readRDS('data/hybas12_fish.rds')
-  sp_data <- merge(sp_data,as.data.frame(hb_data[,c("HYBAS_ID","MAIN_BAS","SUB_AREA","MAIN_BAS_AREA")])[,-5],by="HYBAS_ID")
-  saveRDS(sp_data,'proc/hybas12_fish_w_area.rds')
-}
+# select diadromous and non-diadromous species------------------------------------------------------------
 
-### load Fishbase metadta
-fishbase <- read.csv('proc/iucn_fishbase.csv')
-fishbase <- fishbase[!duplicated(fishbase$iucn_name),]
-levels(fishbase$AnaCat) <- c(NA,rep('Diad.',5),'Non.','Ocea.','Pota.')
+cat('\nRetrieving diadromous species from fishbase..')
+
+# load fishbase metadata
+fishbase <- taxonomy() %>% # get all species available (vector)
+  species(.,fields = c('Species','AnaCat')) %>% # get species table for all species
+  rename(binomial = Species)
+
+fishbase$AnaCat <- as.factor(fishbase$AnaCat) 
+levels(fishbase$AnaCat) <- c(rep('Diad.',6),'Non.','Ocea.','Ocea.','Pota.','Pota.')
+# table(fishbase$AnaCat)
+
+# Species rage data --------------------------------------------------------------------------------------
+
+cat('\nReading hydrobasins data..')
+
+sp_data <- bind_rows(
+  # read hybas12 on IUCN
+  vroom('proc/hybas12_fish.csv',delim=','),
+  # read hybas12 on customRanges
+  vroom(paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),delim=',')
+) %>%
+  inner_join(.,hb_data %>% select(HYBAS_ID,MAIN_BAS,SUB_AREA,MAIN_BAS_AREA),by="HYBAS_ID") %>%
+  as.data.table(.)
+
 # assign diadromous-non diadromous category
 sp_data$diad <- 'f'
-sp_data$diad[sp_data$binomial %in% fishbase$iucn_name[fishbase$AnaCat == 'Diad.']] <- 't'
+sp_data$diad[sp_data$binomial %in% fishbase$binomial[fishbase$AnaCat == 'Diad.']] <- 't'
+
+# Summarize at HYBAS_ID level-----------------------------------------------------------------------------
+
 
 ### HYBAS_ID #################################################
 

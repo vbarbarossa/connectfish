@@ -179,91 +179,102 @@ comparetab <- rbind(comparetab,
                       pota_ci_c = summary$ci_cur_meanW[2],
                       pota_ci_f = summary$ci_fut_meanW[2]
                     ))
-comparetab
+comparetab <- comparetab %>%
+  mutate(diad_diff = diad_ci_c - diad_ci_f,
+         pota_diff = pota_ci_c - pota_ci_f)
 write.csv(comparetab,'tabs/compare_CI_different_oth.csv',row.names = F)
 
 # NID comparison------------------------------------------------------------------------------------------------------
 
-hb_data <- read_sf(paste0(dir_hybas12,'/hybas_na_lev12_v1c.shp')) %>%
+# hybas_na does not include Alaska
+hb_data <- read_sf(paste0(dir_hybas12,'/hybas_na_lev12_v1c.shp'))
+
+# select only hybas that intersect the US
+sel <- st_intersects(st_transform(rnaturalearth::ne_countries(country = 'United States of America',returnclass = 'sf'),54009),
+                     st_transform(hb_data,54009),
+                     sparse = T)
+
+hb_data <- hb_data[sel[[1]],] %>%
   as_tibble() %>%
   select(-geometry)
 
-oth <- 5
-
-# set min occurrences
-names_out <- occ$name[occ$no_occ < oth]
-
-# compute stats across each watershed
-tab_na <- bind_rows(iucnCI,customCI %>% filter(!binomial %in% names_out)) %>%
-  filter(MAIN_BAS %in% unique(hb_data$MAIN_BAS)) %>%
-  group_by(binomial) %>%
-  summarize(
-    type = as.character(unique(category)),
-    ci_current = round(mean(connectivity.cur),2),
-    ci_future = round(mean(connectivity.fut),2),
-    ci_currentW = round(sum(connectivity.cur*patches.cum.area)/sum(patches.cum.area),2),
-    ci_futureW = round(sum(connectivity.fut*patches.cum.area)/sum(patches.cum.area),2),
-    no_basins = n(),
-    area_total = round(sum(patches.cum.area,na.rm=T),2),
-    area_mean = round(mean(patches.cum.area,na.rm=T),2)
+for(oth in c(1,5,10,20,30,50,10**9)){
+  
+  # set min occurrences
+  names_out <- occ$name[occ$no_occ < oth]
+  
+  # compute stats across each watershed
+  tab_na <- bind_rows(iucnCI,customCI %>% filter(!binomial %in% names_out)) %>%
+    filter(MAIN_BAS %in% unique(hb_data$MAIN_BAS)) %>%
+    group_by(binomial) %>%
+    summarize(
+      type = as.character(unique(category)),
+      ci_current = round(mean(connectivity.cur),2),
+      ci_future = round(mean(connectivity.fut),2),
+      ci_currentW = round(sum(connectivity.cur*patches.cum.area)/sum(patches.cum.area),2),
+      ci_futureW = round(sum(connectivity.fut*patches.cum.area)/sum(patches.cum.area),2),
+      no_basins = n(),
+      area_total = round(sum(patches.cum.area,na.rm=T),2),
+      area_mean = round(mean(patches.cum.area,na.rm=T),2)
+    ) %>%
+    select(binomial,ci = ci_currentW) %>%
+    mutate(binomial = as.character(binomial)) %>%
+    arrange(binomial)
+  
+  # get NID data
+  tab_nid <- rbind(
+    readRDS('proc/CI_tab_NID.rds')
   ) %>%
-  select(binomial,ci = ci_currentW) %>%
-  mutate(binomial = as.character(binomial)) %>%
-  arrange(binomial)
-
-# get NID data
-tab_nid <- rbind(
-  readRDS('proc/CI_tab_NID.rds')
-) %>%
-  filter(alpha == 0.55) %>%
-  as_tibble() %>%
-  mutate_each(as.numeric, starts_with("connectivity")) %>%
-  mutate_each(as.numeric, starts_with("patches")) %>%
-  filter(binomial %in% unique(as.character(tab_na$binomial))) %>%
-  filter(MAIN_BAS %in% unique(hb_data$MAIN_BAS)) %>%
-  group_by(binomial) %>%
-  summarize(
-    type = as.character(unique(category)),
-    ci_current = round(mean(connectivity.cur),2),
-    ci_future = round(mean(connectivity.fut),2),
-    ci_currentW = round(sum(connectivity.cur*patches.cum.area)/sum(patches.cum.area),2),
-    ci_futureW = round(sum(connectivity.fut*patches.cum.area)/sum(patches.cum.area),2),
-    no_basins = n(),
-    area_total = round(sum(patches.cum.area,na.rm=T),2),
-    area_mean = round(mean(patches.cum.area,na.rm=T),2)
-  )%>%
-  select(binomial,ci_nid = ci_currentW,type) %>%
-  mutate(binomial = as.character(binomial)) %>%
-  arrange(binomial)
-
-compare_na_nid <- inner_join(tab_na,tab_nid) %>%
-  mutate(type = factor(recode(type, potamodromous = 'non-diadromous')))
-
-# overall
-valerioUtils::r.squared(compare_na_nid$ci,compare_na_nid$ci_nid)
-valerioUtils::rmse(compare_na_nid$ci,compare_na_nid$ci_nid)
-valerioUtils::KGE(compare_na_nid$ci,compare_na_nid$ci_nid)
-
-stats <- compare_na_nid %>%
-  group_by(type) %>%
-  summarize(rsq = paste0('R2 = ',round(valerioUtils::r.squared(ci_nid,ci),2)),
-            rmse = paste0('RMSE = ',round(valerioUtils::rmse(ci_nid,ci),0)),
-            n = paste0('n = ',length(unique(binomial)))) %>%
-  mutate(x = 90,y = c(20,10))
-
-p <- ggplot(compare_na_nid) +
-  geom_point(aes(x=ci_nid,y=ci),alpha = 0.5) +
-  geom_abline(slope = 1,intercept=0,color = 'red') +
-  geom_text(data=stats,mapping = aes(x = 98, y = 20, label = rsq),hjust = 1) +
-  geom_text(data=stats,mapping = aes(x = 98, y = 13, label = rmse),hjust = 1) +
-  geom_text(data=stats,mapping = aes(x = 98, y = 6, label = n),hjust = 1) +
-  xlab('CI (NID) [%]') +
-  ylab('CI (GRanD+GOODD) [%]') +
-  coord_cartesian(expand=F) +
-  facet_wrap('type',ncol = 2) +
-  theme_bw()
-ggsave(paste0('figs/compare_NID_oth',oth,'.jpg'),p,width = 200, height = 100,units = 'mm',type='cairo')
-
+    filter(alpha == 0.55) %>%
+    as_tibble() %>%
+    mutate_each(as.numeric, starts_with("connectivity")) %>%
+    mutate_each(as.numeric, starts_with("patches")) %>%
+    filter(binomial %in% unique(as.character(tab_na$binomial))) %>%
+    filter(MAIN_BAS %in% unique(hb_data$MAIN_BAS)) %>%
+    group_by(binomial) %>%
+    summarize(
+      type = as.character(unique(category)),
+      ci_current = round(mean(connectivity.cur),2),
+      ci_future = round(mean(connectivity.fut),2),
+      ci_currentW = round(sum(connectivity.cur*patches.cum.area)/sum(patches.cum.area),2),
+      ci_futureW = round(sum(connectivity.fut*patches.cum.area)/sum(patches.cum.area),2),
+      no_basins = n(),
+      area_total = round(sum(patches.cum.area,na.rm=T),2),
+      area_mean = round(mean(patches.cum.area,na.rm=T),2)
+    )%>%
+    select(binomial,ci_nid = ci_currentW,type) %>%
+    mutate(binomial = as.character(binomial)) %>%
+    arrange(binomial)
+  
+  compare_na_nid <- inner_join(tab_na,tab_nid) %>%
+    mutate(type = factor(recode(type, potamodromous = 'non-diadromous')))
+  
+  # overall
+  valerioUtils::r.squared(compare_na_nid$ci,compare_na_nid$ci_nid)
+  valerioUtils::rmse(compare_na_nid$ci,compare_na_nid$ci_nid)
+  valerioUtils::KGE(compare_na_nid$ci,compare_na_nid$ci_nid)
+  
+  stats <- compare_na_nid %>%
+    group_by(type) %>%
+    summarize(rsq = paste0('R2 = ',round(valerioUtils::r.squared(ci_nid,ci),2)),
+              rmse = paste0('RMSE = ',round(valerioUtils::rmse(ci_nid,ci),0)),
+              n = paste0('n = ',length(unique(binomial)))) %>%
+    mutate(x = 90,y = c(20,10))
+  
+  p <- ggplot(compare_na_nid) +
+    geom_point(aes(x=ci_nid,y=ci),alpha = 0.5) +
+    geom_abline(slope = 1,intercept=0,color = 'red') +
+    geom_text(data=stats,mapping = aes(x = 98, y = 20, label = rsq),hjust = 1) +
+    geom_text(data=stats,mapping = aes(x = 98, y = 13, label = rmse),hjust = 1) +
+    geom_text(data=stats,mapping = aes(x = 98, y = 6, label = n),hjust = 1) +
+    xlab('CI (NID) [%]') +
+    ylab('CI (GRanD+GOODD) [%]') +
+    coord_cartesian(expand=F) +
+    facet_wrap('type',ncol = 2) +
+    theme_bw()
+  ggsave(paste0('figs/compare_NID_oth',oth,'.jpg'),p,width = 200, height = 100,units = 'mm',type='cairo')
+  
+}
 
 
 
