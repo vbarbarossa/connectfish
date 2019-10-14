@@ -274,6 +274,12 @@ for(oth in c(1,5,10,20,30,50,10**9)){
     theme_bw()
   ggsave(paste0('figs/compare_NID_oth',oth,'.jpg'),p,width = 200, height = 100,units = 'mm',type='cairo')
   
+  
+  p <- ggplot(compare_na_nid %>% reshape2::melt(data=.,id.vars = c('binomial','type')) %>% as_tibble()) +
+    geom_boxplot(aes(x = type, y = value, color = variable)) +
+    theme_bw()
+  ggsave(paste0('figs/compare_NID_oth',oth,'_boxplot.jpg'),p,width = 200, height = 100,units = 'mm',type='cairo')
+  
 }
 
 
