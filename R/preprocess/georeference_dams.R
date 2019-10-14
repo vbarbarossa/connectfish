@@ -19,10 +19,14 @@ dams_cur <- rbind(
 # convert to sf spatial points
 sdams_cur <- st_as_sf(dams_cur,coords = c('X','Y'),crs=4326)
 
+st_write(sdams_cur,'proc/dams_current.gpkg')
+
 # future dams from Zarfl
 dams_fut <- read.csv(file_frhed_dams)
 # convert to spatial points
 sdams_fut <- st_as_sf(dams_fut,coords = c('Lon_2016','Lat_2016'),crs=4326)
+
+st_write(sdams_fut,'proc/dams_future.gpkg')
 
 #-------------------------------------------------------------------------
 #>> Hydrobasins data
