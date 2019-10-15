@@ -1,5 +1,7 @@
 source('R/MASTER.R')
 
+g <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")) # for different dams dataset
+
 # HydroBASINS data ------------------------------------------------------------------------------------------
 # read hydrobasins data
 hb_data <- foreach(i = c('na','ar'),.combine = 'rbind') %do% read_sf(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp'))
@@ -53,7 +55,9 @@ sp_data$diad <- 'f'
 sp_data$diad[sp_data$binomial %in% fishbase$binomial[fishbase$AnaCat == 'Diad.']] <- 't'
 
 # Dams data ---------------------------------------------------------------------------------------------
-dams_NID <- readRDS('proc/dams_NID_hydrobasins.rds')
+dams_NID <- readRDS(c('proc/dams_NID_hydrobasins.rds',
+                      'proc/dams_NID_hydrobasins_large.rds',
+                      'proc/dams_NID_hydrobasins_large2.rds')[g])
 
 # FUNCTION TO FIND UPSTREAM IDs -------------------------------------------------------------------------
 
@@ -130,8 +134,8 @@ basin_connectivity <- function(main_bas_id){
     dfut <- dfut[!duplicated(dfut[,1:2]),]
     
     # sort them, higher PFAFSTETTER number = more upstream
-    dcur <- dcur[order(dcur$PFAF_ID.x,decreasing = T),]
-    dfut <- dfut[order(dfut$PFAF_ID.x,decreasing = T),]
+    dcur <- dcur[order(dcur$PFAF_ID,decreasing = T),]
+    dfut <- dfut[order(dfut$PFAF_ID,decreasing = T),]
     
     # find upstrea IDs of each dam
     upstream_list <- find_upstream_ids(t=as.data.frame(sbas[,c('HYBAS_ID','NEXT_DOWN')])[,-3], #removed the geom column
@@ -237,13 +241,20 @@ basin_connectivity <- function(main_bas_id){
 }
 
 # execution in parallel---------------------------------------------------------------------------------------------
+# split basins in NC groups and equally assign to groups based on area
+arr <- sp_data %>%
+  as_tibble() %>%
+  select(MAIN_BAS,MAIN_BAS_AREA) %>%
+  distinct() %>%
+  arrange(desc(MAIN_BAS_AREA)) %>%
+  mutate(group = rep(1:NC,ceiling(nrow(.)/NC+1))[1:nrow(.)])
 
 cat('\nCalculating CI..\n\n')
 
 global_tab <- do.call('rbind',
                       parallel::mclapply(
-                        unique(sp_data$MAIN_BAS),
-                        basin_connectivity,
+                        split(arr,arr$group),
+                        function(x) foreach(i = 1:nrow(x),.combine = 'rbind') %do% basin_connectivity(x$MAIN_BAS[i]),
                         mc.cores = NC
                       ))
 
@@ -251,4 +262,6 @@ warnings()
 
 cat('\nSaving CI table..\n\n')
 
-saveRDS(global_tab,'proc/CI_tab_NID.rds')
+saveRDS(global_tab,c('proc/CI_tab_NID.rds',
+                     'proc/CI_tab_NID_large.rds',
+                     'proc/CI_tab_NID_large2.rds')[g])
