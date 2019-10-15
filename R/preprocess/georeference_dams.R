@@ -28,6 +28,7 @@ sdams_fut <- st_as_sf(dams_fut,coords = c('Lon_2016','Lat_2016'),crs=4326)
 
 st_write(sdams_fut,'proc/dams_future.gpkg')
 
+sdams_ffr <- st_read(file_ffr_dams)
 #-------------------------------------------------------------------------
 #>> Hydrobasins data
 
@@ -37,10 +38,13 @@ hb_data <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combine 
 # intersect dams and hydrobasins
 sdams_cur_hb <- st_intersection(hb_data,sdams_cur)
 sdams_fut_hb <- st_intersection(hb_data,sdams_fut)
+sdams_ffr_hb <- st_intersection(hb_data,sdams_ffr)
+
 
 # save only the data frame with the intersected metadata
-saveRDS(as.data.frame(sdams_cur_hb)[,1:(ncol(sdams_cur_hb)-1)],'proc/dams_current_hydrobasins.rds')
-saveRDS(as.data.frame(sdams_fut_hb)[,1:(ncol(sdams_fut_hb)-1)],'proc/dams_future_hydrobasins.rds')
+saveRDS(sdams_cur_hb %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),'proc/dams_current_hydrobasins.rds')
+saveRDS(sdams_fut_hb %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),'proc/dams_future_hydrobasins.rds')
+saveRDS(sdams_ffr_hb %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),'proc/dams_currentFFR_hydrobasins.rds')
 
 #>> count
 
