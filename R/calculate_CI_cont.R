@@ -48,7 +48,7 @@ sp_data$diad <- 'f'
 sp_data$diad[sp_data$binomial %in% fishbase$binomial[fishbase$AnaCat == 'Diad.']] <- 't'
 
 # Dams data ---------------------------------------------------------------------------------------------
-dams_cur <- readRDS('proc/dams_currentFFR_hydrobasins.rds') %>%
+dams_cur <- readRDS('proc/dams_current_hydrobasins.rds') %>%
   filter(HYBAS_ID %in% hb_data$HYBAS_ID)
 dams_fut <- readRDS('proc/dams_future_hydrobasins.rds') %>%
   filter(HYBAS_ID %in% hb_data$HYBAS_ID)
@@ -263,27 +263,5 @@ warnings()
 
 cat('\nSaving CI table..\n\n')
 
-# # st <- Sys.time()
-# mbids <- unique(sp_data$MAIN_BAS)
-# global_tab <- list()
-# for(i in seq_along(mbids)) {
-#   global_tab[[i]] <- basin_connectivity(mbids[i])
-#   print(i)
-# }
-# global_tab <- do.call('rbind',global_tab)
-# # Sys.time() - st
 
-# cat('\nCalculating CI..\n\n')
-# 
-# global_tab <- do.call('rbind',
-#                       parallel::mclapply(
-#                         unique(sp_data$MAIN_BAS[sp_data$MAIN_BAS_AREA >= 10000]),
-#                         basin_connectivity,
-#                         mc.cores = NC
-#                       ))
-# 
-# warnings()
-# 
-# cat('\nSaving CI table..\n\n')
-
-saveRDS(global_tab,paste0('proc/CI_tab_global_FFR_',cont,'.rds'))
+saveRDS(global_tab,paste0('proc/CI_tab_global_',cont,'.rds'))
