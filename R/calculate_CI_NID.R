@@ -2,7 +2,7 @@ source('R/MASTER.R')
 
 # HydroBASINS data ------------------------------------------------------------------------------------------
 # read hydrobasins data
-hb_data <- foreach(i = c('na'),.combine = 'rbind') %do% read_sf(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp'))
+hb_data <- foreach(i = c('na','ar'),.combine = 'rbind') %do% read_sf(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp'))
 # add basin area
 # main_bas_area <- do.call('rbind',lapply(split(hb_data_frame,hb_data_frame$MAIN_BAS),function(x) data.frame(MAIN_BAS = unique(x$MAIN_BAS),MAIN_BAS_AREA = sum(x$SUB_AREA))))
 cat('\nCompiling main basin area..')
@@ -14,6 +14,12 @@ main_bas_area <- hb_data %>%
   summarize(MAIN_BAS_AREA = sum(SUB_AREA))
 
 hb_data <- inner_join(hb_data,main_bas_area,by='MAIN_BAS')
+
+# extract only US HB units
+sel <- st_intersects(st_transform(rnaturalearth::ne_countries(country = 'United States of America',returnclass = 'sf'),54009),
+                     st_transform(hb_data,54009),
+                     sparse = T)
+hb_data <- hb_data[sel[[1]],]
 
 
 # select diadromous and non-diadromous species------------------------------------------------------------
