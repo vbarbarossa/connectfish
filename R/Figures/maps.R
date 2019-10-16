@@ -30,7 +30,7 @@ graticules <- rnaturalearth::ne_download(type = "graticules_30", category = "phy
 p <- ggplot() +
   geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
   geom_sf(data = graticules, fill = NA, color = "grey80", lwd = 0.1) +
-  geom_sf(data = world, fill = "grey90", lwd = NA) +
+  geom_sf(data = world, fill = "grey90", lwd = 0) +
   geom_sf(data = hb_unit, aes(fill = value), lwd = 0) +
   scale_fill_viridis_c(breaks = seq(0,100,10),
                        labels = seq(0,100,10),
@@ -47,7 +47,7 @@ p <- ggplot() +
         strip.background = element_rect('white'),
         strip.background.x = element_blank(),
         strip.background.y = element_blank(),
-        strip.text = element_text(angle = 0, vjust = -1.5, size = 16), #<<<<<<< FIX STRIP TEXT
+        strip.text = element_text(angle = 0, vjust = -1, size = 16), #<<<<<<< FIX STRIP TEXT
         legend.title = element_blank()
   )
 
@@ -58,7 +58,7 @@ ggsave('figs/map_CI_HB_mean.jpg',p,
 p <- ggplot() +
   geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
   geom_sf(data = graticules, fill = NA, color = "grey80", lwd = 0.1) +
-  geom_sf(data = world, fill = "grey90", lwd = NA) +
+  geom_sf(data = world, fill = "grey90", lwd = 0) +
   geom_sf(data = bas_unit, aes(fill = value), lwd = 0) +
   scale_fill_viridis_c(breaks = seq(0,100,10),
                        labels = seq(0,100,10),
@@ -75,7 +75,7 @@ p <- ggplot() +
         strip.background = element_rect('white'),
         strip.background.x = element_blank(),
         strip.background.y = element_blank(),
-        strip.text = element_text(angle = 0, vjust = -1.5, size = 16),
+        strip.text = element_text(angle = 0, vjust = -1, size = 16),
         legend.title = element_blank()
   )
 
@@ -83,11 +83,18 @@ ggsave('figs/map_CI_BAS_mean.jpg',p,
        width = 300,height = 260,units = 'mm',dpi = 600,type = 'cairo')
 
 # SR per HB unit----------------------------------------------------------------------
+sr_hb <- hb_unit %>%
+  as_tibble() %>%
+  select(HYBAS_ID,sr,cat) %>%
+  distinct() %>%
+  inner_join(hb_data,.,by = 'HYBAS_ID')
+
+
 p <- ggplot() +
   geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
   geom_sf(data = graticules, fill = NA, color = "grey80", lwd = 0.1) +
-  geom_sf(data = world, fill = "grey90", lwd = NA) +
-  geom_sf(data = hybas_sub, aes(fill = count), alpha=1, lwd = NA) +
+  geom_sf(data = world, fill = "grey90", lwd = 0) +
+  geom_sf(data = sr_hb, aes(fill = sr), alpha=1, lwd = 0) +
   scale_fill_viridis_c(trans = 'log10',na.value = "grey90") +
   coord_sf(crs = crs_custom) +
   facet_wrap('cat',ncol = 1) +
@@ -99,10 +106,39 @@ p <- ggplot() +
         legend.key.width = unit(8,'line'),
         strip.background = element_rect('white'),
         strip.background.x = element_blank(),
-        strip.text = element_text(angle = 0, vjust = -1.5, size = 16),
+        strip.text = element_text(angle = 0, vjust = -1, size = 16),
         legend.title = element_blank()
   )
 
-ggsave('figs/Figure_1_initial_sr_HYBAS_ID_count.jpg',p,
-       width = 220,height = 260,units = 'mm',dpi = 600)
+ggsave('figs/map_SR_HB.jpg',p,
+       width = 220,height = 260,units = 'mm',dpi = 600, type = 'cairo')
 
+# # SR per BAS unit----------------------------------------------------------------------
+# sr_bas <- bas_unit %>%
+#   as_tibble() %>%
+#   select(MAIN_BAS,sr,cat) %>%
+#   distinct() %>%
+#   inner_join(hb_data,.,by = 'MAIN_BAS')
+# 
+# p <- ggplot() +
+#   geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
+#   geom_sf(data = graticules, fill = NA, color = "grey80", lwd = 0.1) +
+#   geom_sf(data = world, fill = "grey90", lwd = 0) +
+#   geom_sf(data = sr_hb, aes(fill = sr), alpha=1, lwd = 0) +
+#   scale_fill_viridis_c(trans = 'log10',na.value = "grey90") +
+#   coord_sf(crs = crs_custom) +
+#   facet_wrap('cat',ncol = 1) +
+#   theme_minimal() +
+#   theme(text = element_text(size = 15),
+#         panel.grid.major = element_line(color=NA),
+#         axis.text = element_blank(),
+#         legend.position = 'bottom',
+#         legend.key.width = unit(8,'line'),
+#         strip.background = element_rect('white'),
+#         strip.background.x = element_blank(),
+#         strip.text = element_text(angle = 0, vjust = -1, size = 16),
+#         legend.title = element_blank()
+#   )
+# 
+# ggsave('figs/map_SR_BAS.jpg',p,
+#        width = 220,height = 260,units = 'mm',dpi = 600, type = 'cairo')

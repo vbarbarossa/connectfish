@@ -4,6 +4,8 @@
 source('R/MASTER.R')
 
 oth <- 10
+FFR <- TRUE
+
 # DATA ---------------------------------------------------------------------------
 # hb units no sf
 hb_simple <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combine = 'rbind') %do% read_sf(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp')) %>% 
@@ -14,8 +16,10 @@ sp_reference <- read.csv(paste0('tabs/species_ci/species_ci_oth',oth,'.csv')) %>
   as_tibble()
 
 # CI data
+ffrad <- ''
+if(ffrad) ffrad <- 'FFR_'
 CI_tab <- foreach(cont = c('af','ar','as','au','eu','gr','na','sa','si'),.combine='rbind') %do% {
-  readRDS(paste0('proc/CI_tab_global_',cont,'.rds'))} %>%
+  readRDS(paste0('proc/CI_tab_global_',ffrad,cont,'.rds'))} %>%
   filter(alpha == 0.55) %>%
   as_tibble() %>%
   mutate_each(as.numeric, starts_with("connectivity")) %>%
