@@ -252,9 +252,11 @@ spl_arr <- split(arr,arr$group)
 global_tab <- do.call('rbind',
                       parallel::mcmapply(
                         function(x,ind) foreach(i = 1:nrow(x),.combine = 'rbind') %do% {
-                          basin_connectivity(x$MAIN_BAS[i])
-                          print(paste0('Core ',ind,'- Thread ',i))
-                          },
+                          print(paste0('Core ',ind,' - Thread ',i))
+                          return(
+                            basin_connectivity(x$MAIN_BAS[i])
+                          )
+                        },
                         spl_arr,seq_along(spl_arr),
                         mc.cores = NC, SIMPLIFY = F
                       ))
