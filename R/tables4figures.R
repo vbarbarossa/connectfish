@@ -17,9 +17,9 @@ sp_reference <- read.csv(paste0('tabs/species_ci/species_ci_oth',oth,'.csv')) %>
 
 # CI data
 ffrad <- ''
-if(ffrad) ffrad <- 'FFR_'
+if(FFR) ffrad <- '_FFR'
 CI_tab <- foreach(cont = c('af','ar','as','au','eu','gr','na','sa','si'),.combine='rbind') %do% {
-  readRDS(paste0('proc/CI_tab_global_',ffrad,cont,'.rds'))} %>%
+  readRDS(paste0('proc/CI_tab_global',ffrad,'_',cont,'.rds'))} %>%
   filter(alpha == 0.55) %>%
   as_tibble() %>%
   mutate_each(as.numeric, starts_with("connectivity")) %>%
@@ -67,7 +67,7 @@ HB_summary <- foreach(tp = c('t','f'),.combine='rbind') %do%{
   mutate(cat = forcats::fct_recode(cat, 'Diadromous' = 't','Non diadromous' = 'f')) %>%
   as_tibble()
 
-saveRDS(HB_summary,'proc/CI_HB.rds')
+saveRDS(HB_summary,paste0('proc/CI_HB',ffrad,'.rds'))
 
 BAS_summary <- foreach(tp = c('diadromous','potamodromous'),.combine='rbind') %do%{
   CI_tab %>%
@@ -85,5 +85,5 @@ BAS_summary <- foreach(tp = c('diadromous','potamodromous'),.combine='rbind') %d
   mutate(cat = forcats::fct_recode(cat, 'Diadromous' = 'diadromous','Non diadromous' = 'potamodromous')) %>%
   as_tibble()
 
-saveRDS(BAS_summary,'proc/CI_BAS.rds')
+saveRDS(BAS_summary,paste0('proc/CI_BAS',ffrad,'.rds'))
 
