@@ -1,3 +1,4 @@
+# DEPRECATED--------------------------------------------------------------------------------------
 # checking..
 library(rfishbase)
 Sys.setenv(FISHBASE_VERSION="17.07")
