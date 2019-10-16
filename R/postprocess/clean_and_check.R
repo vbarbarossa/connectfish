@@ -223,7 +223,7 @@ compare_tab <-  inner_join(tab_compare_ffr %>%
                              mutate(binomial = as.character(binomial)) %>%
                              arrange(binomial)
                            ,tab_ffr %>% 
-                             select(binomial,ci_ffr = ci_currentW) %>%
+                             select(binomial,ci_ffr = ci_currentW,type) %>%
                              mutate(binomial = as.character(binomial)) %>%
                              arrange(binomial)) %>%
   mutate(type = factor(recode(type, potamodromous = 'non-diadromous')))
@@ -252,7 +252,7 @@ ggsave(paste0('figs/compare_FFR_oth10.jpg'),p,width = 200, height = 100,units = 
 p <- ggplot(compare_tab %>% reshape2::melt(data=.,id.vars = c('binomial','type')) %>% as_tibble()) +
   geom_boxplot(aes(x = type, y = value, color = variable)) +
   theme_bw()
-ggsave(paste0(dir_figures_NID,'compare_FFR_oth10_boxplot.jpg'),p,width = 200, height = 100,units = 'mm',type='cairo')
+ggsave(paste0('figs/compare_FFR_oth10_boxplot.jpg'),p,width = 200, height = 100,units = 'mm',type='cairo')
 
 
 

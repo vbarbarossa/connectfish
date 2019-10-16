@@ -18,7 +18,7 @@ fishbase$AnaCat <- as.factor(fishbase$AnaCat)
 levels(fishbase$AnaCat) <- c(rep('Diad.',6),'Non.','Ocea.','Ocea.','Pota.','Pota.')
 # table(fishbase$AnaCat)
 
-# Species rage data --------------------------------------------------------------------------------------
+# Species range data --------------------------------------------------------------------------------------
 
 cat('\nReading hydrobasins data..')
 
@@ -34,6 +34,9 @@ sp_data <- bind_rows(
 # assign diadromous-non diadromous category
 sp_data$diad <- 'f'
 sp_data$diad[sp_data$binomial %in% fishbase$binomial[fishbase$AnaCat == 'Diad.']] <- 't'
+
+# filter based on final data used
+species_used <- read.csv('tabs/species_ci/species_ci_oth10.csv')
 
 # Summarize at HYBAS_ID level-----------------------------------------------------------------------------
 
@@ -53,6 +56,16 @@ if(file.exists('proc/SR_per_HYBAS_ID.rds')){
             parallel::mclapply(
               split(sp_data,sp_data$cont),
               function(y){
+                t <- y %>%
+                  group_by(HYBAS_ID) %>%
+                  summarize(
+                    sr = c(length(unique(as.character(binomial))),
+                           length(unique(as.character(binomial[diad != 't']))),
+                           length(unique(as.character(binomial[diad == 't'])))),
+                    category = c('Total','Potamodromous','Diadromous')
+                  )
+                
+                
                 do.call('rbind',
                         lapply(
                           split(y,y$HYBAS_ID),
