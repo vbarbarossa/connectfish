@@ -203,6 +203,7 @@ for(oth in c(1,5,10,20,30,50,10**9)){
   # set min occurrences
   names_out <- occ$name[occ$no_occ < oth]
   
+  # need to first filter out raw data based on hybas 
   # compute stats across each watershed
   tab_na <- bind_rows(iucnCI,customCI %>% filter(!binomial %in% names_out)) %>%
     filter(MAIN_BAS %in% unique(hb_data$MAIN_BAS)) %>%
@@ -223,7 +224,7 @@ for(oth in c(1,5,10,20,30,50,10**9)){
   
   # get NID data
   tab_nid <- rbind(
-    readRDS('proc/CI_tab_NID.rds')
+    readRDS('proc/CI_tab_NID_large2.rds')
   ) %>%
     filter(alpha == 0.55) %>%
     as_tibble() %>%

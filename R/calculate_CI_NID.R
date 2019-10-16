@@ -57,7 +57,8 @@ sp_data$diad[sp_data$binomial %in% fishbase$binomial[fishbase$AnaCat == 'Diad.']
 # Dams data ---------------------------------------------------------------------------------------------
 dams_NID <- readRDS(c('proc/dams_NID_hydrobasins.rds',
                       'proc/dams_NID_hydrobasins_large.rds',
-                      'proc/dams_NID_hydrobasins_large2.rds')[g])
+                      'proc/dams_NID_hydrobasins_large2.rds',
+                      'proc/dams_NID_hydrobasins_GGonly.rds')[g])
 
 # FUNCTION TO FIND UPSTREAM IDs -------------------------------------------------------------------------
 
@@ -264,4 +265,5 @@ cat('\nSaving CI table..\n\n')
 
 saveRDS(global_tab,c('proc/CI_tab_NID.rds',
                      'proc/CI_tab_NID_large.rds',
-                     'proc/CI_tab_NID_large2.rds')[g])
+                     'proc/CI_tab_NID_large2.rds',
+                     'proc/CI_tab_NID_GGonly.rds')[g])

@@ -88,16 +88,17 @@ hb_data <- hb_data[sel[[1]],]
 # intersect dams and hydrobasins
 sdams_hb <- st_intersection(hb_data,GGNID)
 
-# intersect dams and hydrobasins
 sdams_hb_large <- st_intersection(hb_data,GGNID_large)
 
 sdams_hb_large2 <- st_intersection(hb_data,GGNID_large2)
 
+sdams_hb_GGonly <- st_intersection(hb_data,sdams_cur)
 
 # save only the data frame with the intersected metadata
 saveRDS(sdams_hb %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),'proc/dams_NID_hydrobasins.rds')
 saveRDS(sdams_hb_large %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),'proc/dams_NID_hydrobasins_large.rds')
 saveRDS(sdams_hb_large2 %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),'proc/dams_NID_hydrobasins_large2.rds')
+saveRDS(sdams_hb_GGonly %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),'proc/dams_NID_hydrobasins_GGonly.rds')
 
 # 24616 HB units in NID
 # 4582 HB units in current_dams # 5.4 times less than NID
