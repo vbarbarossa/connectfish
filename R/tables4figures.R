@@ -4,7 +4,7 @@
 source('R/MASTER.R')
 
 oth <- 10
-FFR <- TRUE
+FFR <- FALSE
 
 # DATA ---------------------------------------------------------------------------
 # hb units no sf
@@ -43,12 +43,11 @@ sp_data <- bind_rows(
   vroom(paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),delim=',')
 ) %>%
   filter(binomial %in% as.character(sp_reference$binomial)) %>%
-  inner_join(.,hb_simple) %>%
+  inner_join(.,hb_simple, by = 'HYBAS_ID') %>%
   inner_join(.,CI_tab,by = c('binomial','MAIN_BAS'))
 
 sp_data$diad <- 'f'
 sp_data$diad[sp_data$binomial %in% fishbase$binomial[fishbase$AnaCat == 'Diad.']] <- 't'
-
 
 # summarize no. species and CI per HYBAS_ID
 HB_summary <- foreach(tp = c('t','f'),.combine='rbind') %do%{
@@ -75,8 +74,8 @@ BAS_summary <- foreach(tp = c('diadromous','potamodromous'),.combine='rbind') %d
     group_by(MAIN_BAS) %>%
     summarize(
       sr = n(),
-      Present = mean(connectivity.cur*patches.cum.area/sum(patches.cum.area,na.rm=T),na.rm=T),
-      Future = mean(connectivity.fut*patches.cum.area/sum(patches.cum.area,na.rm=T),na.rm=T),
+      Present = sum(connectivity.cur*patches.cum.area,na.rm=T)/sum(patches.cum.area,na.rm=T),
+      Future = sum(connectivity.fut*patches.cum.area,na.rm=T)/sum(patches.cum.area,na.rm=T),
       cat = tp
     )
 } %>%
