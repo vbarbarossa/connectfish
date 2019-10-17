@@ -27,36 +27,11 @@ bb <- rnaturalearth::ne_download(type = "wgs84_bounding_box", category = "physic
                                  returnclass = "sf")
 graticules <- rnaturalearth::ne_download(type = "graticules_30", category = "physical",
                                          returnclass = "sf")
-print('writing maps..')
-# CI per HB unit----------------------------------------------------------------------
-p <- ggplot() +
-  geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
-  geom_sf(data = graticules, fill = NA, color = "grey80", lwd = 0.1) +
-  geom_sf(data = world, fill = "grey90", lwd = 0) +
-  geom_sf(data = hb_unit, aes(fill = value), lwd = 0) +
-  scale_fill_viridis_c(breaks = seq(0,100,10),
-                       labels = seq(0,100,10),
-                       limits = c(0,100),
-                       option = 'C',na.value = "grey90") +
-  coord_sf(crs = crs_custom) +
-  facet_grid(CI~cat) +
-  theme_minimal() +
-  theme(text = element_text(size = 15),
-        panel.grid.major = element_line(color=NA),
-        axis.text = element_blank(),
-        legend.position = 'bottom',
-        legend.key.width = unit(8,'line'),
-        strip.background = element_rect('white'),
-        strip.background.x = element_blank(),
-        strip.background.y = element_blank(),
-        strip.text = element_text(angle = 0, vjust = -1, size = 16), #<<<<<<< FIX STRIP TEXT
-        legend.title = element_blank()
-  )
-
-ggsave('figs/map_CI_HB_mean_FFR.jpg',p,
-       width = 300,height = 260,units = 'mm',dpi = 600,type = 'cairo')
 
 # CI per BAS unit----------------------------------------------------------------------
+print('writing BAS maps..')
+
+
 p <- ggplot() +
   geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
   geom_sf(data = graticules, fill = NA, color = "grey80", lwd = 0.1) +
@@ -84,7 +59,43 @@ p <- ggplot() +
 ggsave('figs/map_CI_BAS_mean_FFR.jpg',p,
        width = 300,height = 260,units = 'mm',dpi = 600,type = 'cairo')
 
+
+# CI per HB unit----------------------------------------------------------------------
+print('writing HB maps..')
+
+
+p <- ggplot() +
+  geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
+  geom_sf(data = graticules, fill = NA, color = "grey80", lwd = 0.1) +
+  geom_sf(data = world, fill = "grey90", lwd = 0) +
+  geom_sf(data = hb_unit, aes(fill = value), lwd = 0) +
+  scale_fill_viridis_c(breaks = seq(0,100,10),
+                       labels = seq(0,100,10),
+                       limits = c(0,100),
+                       option = 'C',na.value = "grey90") +
+  coord_sf(crs = crs_custom) +
+  facet_grid(CI~cat) +
+  theme_minimal() +
+  theme(text = element_text(size = 15),
+        panel.grid.major = element_line(color=NA),
+        axis.text = element_blank(),
+        legend.position = 'bottom',
+        legend.key.width = unit(8,'line'),
+        strip.background = element_rect('white'),
+        strip.background.x = element_blank(),
+        strip.background.y = element_blank(),
+        strip.text = element_text(angle = 0, vjust = -1, size = 16),
+        legend.title = element_blank()
+  )
+
+ggsave('figs/map_CI_HB_mean_FFR.jpg',p,
+       width = 300,height = 260,units = 'mm',dpi = 600,type = 'cairo')
+
+
 # SR per HB unit----------------------------------------------------------------------
+print('writing SR maps..')
+
+
 sr_hb <- hb_unit %>%
   as_tibble() %>%
   select(HYBAS_ID,sr,cat) %>%
