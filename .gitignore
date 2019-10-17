@@ -1,12 +1,11 @@
 batch
 batch_out
-sh
 data
 figs
 old
 proc
 tabs
-*.sh
+*.out
 .Rproj.user
 *.Rproj
 .Rhistory
