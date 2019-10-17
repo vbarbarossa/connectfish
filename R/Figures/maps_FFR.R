@@ -5,13 +5,7 @@ crs_custom <- "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +uni
 # HB data
 hb_data <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combine = 'rbind') %do% read_sf(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp'))
 
-# HB unit
-hb_unit <- hb_data %>%
-  select(HYBAS_ID) %>%
-  # table with CI values per HB unit
-  inner_join(.,readRDS('proc/CI_HB_FFR.rds'),by = 'HYBAS_ID') #%>%
-# st_crop(.,xmin = -180,xmax = 180,ymin = -90,ymax = 90)
-
+print('compiling BAS units..')
 # BAS unit
 bas_unit <- hb_data %>%
   group_by(MAIN_BAS) %>%
@@ -19,6 +13,15 @@ bas_unit <- hb_data %>%
   inner_join(.,readRDS('proc/CI_BAS_FFR.rds'),by = 'MAIN_BAS') #%>%
 # st_crop(.,xmin = -180,xmax = 180,ymin = -90,ymax = 90)
 
+print('compiling HB units..')
+# HB unit
+hb_unit <- hb_data %>%
+  select(HYBAS_ID) %>%
+  # table with CI values per HB unit
+  inner_join(.,readRDS('proc/CI_HB_FFR.rds'),by = 'HYBAS_ID') #%>%
+# st_crop(.,xmin = -180,xmax = 180,ymin = -90,ymax = 90)
+
+print('gathering base layers..')
 # base layers
 world <- rnaturalearth::ne_countries(returnclass = "sf")[,1]
 bb <- rnaturalearth::ne_download(type = "wgs84_bounding_box", category = "physical",
