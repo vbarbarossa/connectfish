@@ -9,16 +9,14 @@ hb_data <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combine 
 hb_unit <- hb_data %>%
   select(HYBAS_ID) %>%
   # table with CI values per HB unit
-  inner_join(.,readRDS('proc/CI_HB_FFR.rds'),by = 'HYBAS_ID') %>%
-  st_buffer(0) #%>%
+  inner_join(.,readRDS('proc/CI_HB_FFR.rds'),by = 'HYBAS_ID') #%>%
 # st_crop(.,xmin = -180,xmax = 180,ymin = -90,ymax = 90)
 
 # BAS unit
 bas_unit <- hb_data %>%
   group_by(MAIN_BAS) %>%
   summarize() %>%
-  inner_join(.,readRDS('proc/CI_BAS_FFR.rds'),by = 'MAIN_BAS')  %>%
-  st_buffer(0) #%>%
+  inner_join(.,readRDS('proc/CI_BAS_FFR.rds'),by = 'MAIN_BAS') #%>%
 # st_crop(.,xmin = -180,xmax = 180,ymin = -90,ymax = 90)
 
 # base layers
