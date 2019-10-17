@@ -42,13 +42,13 @@ dams_cur <- rbind(
   cbind(data.frame(ID = good2$DAM_ID,database = 'GOOD2'),st_coordinates(good2))
 )
 # compare to the actual georeferenced data used in the study
-dams_cur <- dams_cur[dams_cur$ID %in% readRDS('proc/dams_current_hydrobasins.rds')$ID,]
+# dams_cur <- dams_cur[dams_cur$ID %in% readRDS('proc/dams_current_hydrobasins.rds')$ID,]
 # convert to sf spatial points
 sdams_cur <- st_as_sf(dams_cur,coords = c('X','Y'),crs=4326)
 
 # future dams from Zarfl
 dams_fut <- read.csv(file_frhed_dams)
-dams_fut <- dams_fut[dams_fut$DAM_ID %in% readRDS('proc/dams_future_hydrobasins.rds')$DAM_ID,]
+# dams_fut <- dams_fut[dams_fut$DAM_ID %in% readRDS('proc/dams_future_hydrobasins.rds')$DAM_ID,]
 
 # convert to spatial points
 sdams_fut <- st_as_sf(dams_fut,coords = c('Lon_2016','Lat_2016'),crs=4326)
@@ -137,23 +137,23 @@ for(i in 1:length(basin_names)){
     )
   # p_base
   
-  for(cat_fish in c('Potamodromous','Diadromous')){
+  for(cat_fish in c('Non diadromous','Diadromous')){
     # for(ind_cat in c(1,5)){
     # cat_fish <- 'Potamodromous'
     # if(ind_cat == 5) cat_fish <- 'Diadromous'
     
     ci_main <- CI_stats[CI_stats$MAIN_BAS == basin_IDs[i] & CI_stats$cat == cat_fish,] %>%
-      .[.$type != 'DELTA',] # filter out
+      filter(CI != 'Difference') # filter out
     if(nrow(ci_main) > 0){
-      ci_main$type <- factor(ci_main$type,levels = c('Present','Future'))
+      ci_main$CI <- factor(ci_main$CI,levels = c('Present','Future'))
       ci_main$cat <- factor(ci_main$cat, levels = cat_fish)
       ci_main$name <- basin_names[i]
       ci_main$name <- factor(ci_main$name)
       
     }else{
       ci_main[1:2,1:5] <- rep(NA,10)
-      ci_main$type <- c('Present','Future')
-      ci_main$type <- factor(ci_main$type,levels = c('Present','Future'))
+      ci_main$CI <- c('Present','Future')
+      ci_main$CI <- factor(ci_main$CI,levels = c('Present','Future'))
       ci_main$cat <- cat_fish
       ci_main$cat <- factor(ci_main$cat, levels = cat_fish)
       ci_main$name <- basin_names[i]
@@ -166,18 +166,18 @@ for(i in 1:length(basin_names)){
     
     p_maps <- foreach(ty = c('Present','Future')) %do% {
       
-      ci_sel <- ci_spatial[ci_spatial$type == ty,]
-      ci_sel$type <- factor(ci_sel$type)
+      ci_sel <- ci_spatial[ci_spatial$CI == ty,]
+      ci_sel$CI <- factor(ci_sel$CI)
       
       # map the CI
       p <- ggplot(bas) +
         geom_sf(color = NA,fill='grey90') + #no border
-        geom_sf(data = ci_sel,aes(fill = mean),color=NA) +
+        geom_sf(data = ci_sel,aes(fill = value),color=NA) +
         scale_fill_viridis_c(breaks = seq(0,100,10),
                              labels = seq(0,100,10),
                              limits = c(0,100),
                              option = 'C',na.value = "grey90") +
-        # facet_wrap('type',ncol=2) +
+        # facet_wrap('CI',ncol=2) +
         theme_bw() +
         theme(
           text = element_text(size = 15),
@@ -235,7 +235,7 @@ for(i in 1:length(basin_names)){
     
     # return(p)
     ggsave(filename = paste0(dir_(paste0(dir_('figs/Figure_3/'),cat_fish,'/')),ws_lab,'.jpg'),
-           p,width = 200,height = 50,units = 'mm',dpi = 600)
+           p,width = 200,height = 50,units = 'mm',dpi = 600,type = 'cairo')
     
     if(i == 1){
       
@@ -253,7 +253,7 @@ for(i in 1:length(basin_names)){
       # legend for CI
       p_leg_ci <- ggplot(bas) +
         geom_sf(color = NA,fill='grey90') + #no border
-        geom_sf(data = ci_sel[1:10,],aes(fill = mean),color=NA) +
+        geom_sf(data = ci_sel[1:10,],aes(fill = value),color=NA) +
         scale_fill_viridis_c(breaks = seq(0,100,10),
                              labels = seq(0,100,10),
                              limits = c(0,100),
