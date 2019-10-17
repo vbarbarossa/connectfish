@@ -3,13 +3,18 @@ source('R/MASTER.R')
 crs_custom <- "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 
 # HB data
-hb_data <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combine = 'rbind') %do% read_sf(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp'))
-
+print('reading HB data and buffering..')
+if(file.exists('proc/hb_global_buffered.rds')){
+  hb_data <- readRDS('proc/hb_global_buffered.rds')
+}else{
+  hb_data <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combine = 'rbind') %do% read_sf(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp')) %>%
+    st_buffer(0)
+  saveRDS(hb_data,'proc/hb_global_buffered.rds')
+}
 
 print('compiling BAS units..')
 # BAS unit
 bas_unit <- hb_data %>%
-  st_buffer(0) %>%
   group_by(MAIN_BAS) %>%
   summarize() %>%
   inner_join(.,readRDS('proc/CI_BAS.rds'),by = 'MAIN_BAS') %>%
