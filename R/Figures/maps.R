@@ -1,9 +1,13 @@
 source('R/MASTER.R')
 
 crs_custom <- "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+FFR = FALSE
 
-# HB data
+ffr_suffix <- ''
+if(FFR) ffr_suffix <- '_FFR'
+# HB data-----------------------------------------------------------------------------------------------------------------
 print('reading HB data and buffering..')
+
 if(file.exists('proc/hb_global_buffered.rds')){
   hb_data <- readRDS('proc/hb_global_buffered.rds')
 }else{
@@ -12,25 +16,40 @@ if(file.exists('proc/hb_global_buffered.rds')){
   saveRDS(hb_data,'proc/hb_global_buffered.rds')
 }
 
+# BAS unit-----------------------------------------------------------------------------------------------------------------
 print('compiling BAS units..')
-# BAS unit
-bas_unit <- hb_data %>%
+
+if(file.exists(paste0('proc/CI_BAS_map',ffr_suffix,'.rds'))){
+  bas_unit <- readRDS(paste0('proc/CI_BAS_map',ffr_suffix,'.rds'))
+}else{
+  bas_unit <- hb_data %>%
   group_by(MAIN_BAS) %>%
   summarize() %>%
-  inner_join(.,readRDS('proc/CI_BAS.rds'),by = 'MAIN_BAS') %>%
+  inner_join(.,readRDS(paste0('proc/CI_BAS',ffr_suffix,'.rds')),by = 'MAIN_BAS') %>%
   st_crop(.,xmin = -180,xmax = 180,ymin = -90,ymax = 90)
+  
+  saveRDS(bas_unit, paste0('proc/CI_BAS_map',ffr_suffix,'.rds'))
+}
 
+# HB unit-----------------------------------------------------------------------------------------------------------------
 print('compiling HB units..')
-# HB unit
-hb_unit <- hb_data %>%
+
+if(file.exists(paste0('proc/CI_HB_map',ffr_suffix,'.rds'))){
+  hb_unit <- readRDS(paste0('proc/CI_HB_map',ffr_suffix,'.rds'))
+}else{
+  hb_unit <- hb_data %>%
   select(HYBAS_ID) %>%
   # table with CI values per HB unit
-  inner_join(.,readRDS('proc/CI_HB.rds'),by = 'HYBAS_ID') %>%
-  # st_buffer(0) %>%
+  inner_join(.,readRDS(paste0('proc/CI_HB',ffr_suffix,'.rds')),by = 'HYBAS_ID') %>%
   st_crop(.,xmin = -180,xmax = 180,ymin = -90,ymax = 90)
+  
+  saveRDS(hb_unit, paste0('proc/CI_HB_map',ffr_suffix,'.rds'))
+}
 
+
+# base layers-----------------------------------------------------------------------------------------------------------------
 print('gathering base layers..')
-# base layers
+
 world <- rnaturalearth::ne_countries(returnclass = "sf")[,1]
 bb <- rnaturalearth::ne_download(type = "wgs84_bounding_box", category = "physical",
                                  returnclass = "sf")
@@ -65,7 +84,7 @@ p <- ggplot() +
         legend.title = element_blank()
   )
 
-ggsave('figs/map_CI_BAS_mean.jpg',p,
+ggsave(paste0('figs/map_CI_BAS_mean',ffr_suffix,'.jpg'),p,
        width = 300,height = 260,units = 'mm',dpi = 600,type = 'cairo')
 
 
@@ -97,13 +116,12 @@ p <- ggplot() +
         legend.title = element_blank()
   )
 
-ggsave('figs/map_CI_HB_mean.jpg',p,
+ggsave(paste0('figs/map_CI_HB_mean',ffr_suffix,'.jpg'),p,
        width = 300,height = 260,units = 'mm',dpi = 600,type = 'cairo')
 
 
 # SR per HB unit----------------------------------------------------------------------
-print('writing SR maps..')
-
+print('compiling SR data..')
 
 sr_hb <- hb_unit %>%
   as_tibble() %>%
@@ -111,6 +129,7 @@ sr_hb <- hb_unit %>%
   distinct() %>%
   inner_join(hb_data,.,by = 'HYBAS_ID')
 
+print('writing SR maps..')
 
 p <- ggplot() +
   geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
@@ -132,5 +151,5 @@ p <- ggplot() +
         legend.title = element_blank()
   )
 
-ggsave('figs/map_SR_HB.jpg',p,
+ggsave(paste0('figs/map_SR_HB',ffr_suffix,'.jpg'),p,
        width = 220,height = 260,units = 'mm',dpi = 600, type = 'cairo')
