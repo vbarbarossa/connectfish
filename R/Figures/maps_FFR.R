@@ -27,7 +27,7 @@ bb <- rnaturalearth::ne_download(type = "wgs84_bounding_box", category = "physic
                                  returnclass = "sf")
 graticules <- rnaturalearth::ne_download(type = "graticules_30", category = "physical",
                                          returnclass = "sf")
-print()
+print('writing maps..')
 # CI per HB unit----------------------------------------------------------------------
 p <- ggplot() +
   geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
