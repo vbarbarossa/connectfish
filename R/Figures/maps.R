@@ -11,7 +11,8 @@ print('compiling BAS units..')
 bas_unit <- hb_data %>%
   group_by(MAIN_BAS) %>%
   summarize() %>%
-  inner_join(.,readRDS('proc/CI_BAS.rds'),by = 'MAIN_BAS') #%>%
+  inner_join(.,readRDS('proc/CI_BAS.rds'),by = 'MAIN_BAS') %>%
+  st_buffer(0) #%>%
   # st_crop(.,xmin = -180,xmax = 180,ymin = -90,ymax = 90)
 
 print('compiling HB units..')
@@ -19,7 +20,8 @@ print('compiling HB units..')
 hb_unit <- hb_data %>%
   select(HYBAS_ID) %>%
   # table with CI values per HB unit
-  inner_join(.,readRDS('proc/CI_HB.rds'),by = 'HYBAS_ID') #%>%
+  inner_join(.,readRDS('proc/CI_HB.rds'),by = 'HYBAS_ID') %>%
+  st_buffer(0) #%>%
   # st_crop(.,xmin = -180,xmax = 180,ymin = -90,ymax = 90)
 
 print('gathering base layers..')
