@@ -2,9 +2,9 @@ source('R/MASTER.R')
 
 #------------------------------------------------------------
 #> OPTIONS
-file_GG <- 'proc/CI_tab_NID_GGonly.rds'
-file_NID <- 'proc/CI_tab_NID.rds'
-dir_figures_NID <- dir_('figs/compare_NID_all/')
+file_GG <- 'proc/CI_tab_NID_GGonly_FFR.rds'
+file_NID <- 'proc/CI_tab_NID_FFR.rds'
+dir_figures_NID <- dir_('figs/compare_NID_all_FFR/')
 
 # SPECIE SELECTION----------------------------------------------------------------------------------------------------
 

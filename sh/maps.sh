@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -p normal
+#SBATCH -p fat
 #SBATCH -N 1
 #SBATCH --time=3-00:00:00
 #SBATCH --output=sh/maps.out
