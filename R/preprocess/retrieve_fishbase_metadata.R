@@ -1,3 +1,5 @@
+# DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 source('R/MASTER.R')
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< need to check this script
 Sys.setenv(FISHBASE_VERSION="17.07")
