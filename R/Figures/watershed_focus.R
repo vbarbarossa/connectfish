@@ -10,7 +10,7 @@ CI_tab <- foreach(cont = c('af','ar','as','au','eu','gr','na','sa','si'),.combin
   mutate_each(as.numeric, starts_with("connectivity")) %>%
   mutate_each(as.numeric, starts_with("patches"))
 CI_tab$category <- factor(CI_tab$category, levels = c('potamodromous','diadromous'))
-levels(CI_tab$category) <- c('Potamodromous','Diadromous')
+levels(CI_tab$category) <- c('Non diadromous','Diadromous')
 
 # HYBAS DATA --------------------------------------------------------------------------------------------------
 hb_data <- readRDS('proc/hybas12poly_global_w_area_main.rds')
@@ -210,7 +210,7 @@ for(i in 1:length(basin_names)){
     levels(ci$variable) <- c('Pres.','Futu.')
     
     p_bp <- ggplot(ci) +
-      geom_boxplot(aes(x = variable, y = value),fill = 'grey90',color = 'grey40',width = 0.4) +
+      geom_boxplot(aes(x = variable, y = value),fill = 'grey90',color = 'grey40',width = 0.4,outlier.size=0.5) +
       scale_y_continuous(limits = c(0,100),breaks = c(0,50,100),labels = c('0%','50%','100%')) +
       xlab('') +
       ylab('CI') +
@@ -248,7 +248,7 @@ for(i in 1:length(basin_names)){
                            ,left = text_grob("Am", color = "white",rot = 90))
       
       ggsave(filename = paste0(dir_('figs/Figure_3/'),'header.jpg'),
-             p,width = 200,height = 8,units = 'mm',dpi = 600)
+             p,width = 200,height = 8,units = 'mm',dpi = 600,type='cairo')
       
       # legend for CI
       p_leg_ci <- ggplot(bas) +
@@ -293,7 +293,7 @@ for(i in 1:length(basin_names)){
              annotate_figure(ggarrange(cowplot::get_legend(p_leg_dams),cowplot::get_legend(p_leg_ci),NULL,
                                        nrow=1,ncol = 3,widths = c(0.5,1,0.3))
                              ,left = text_grob("Am", color = "white",rot = 90))
-             ,width = 200,height = 8,units = 'mm',dpi = 600)
+             ,width = 200,height = 8,units = 'mm',dpi = 600,type='cairo')
       
       
       
@@ -312,7 +312,6 @@ for(i in 1:length(basin_names)){
 crs_custom <- "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 
 #basins location map for SI
-# world <- readRDS('proc/world_boundaries.rds')
 world <- rnaturalearth::ne_countries(returnclass = "sf")[,1]
 bb <- rnaturalearth::ne_download(type = "wgs84_bounding_box", category = "physical",
                                  returnclass = "sf")
@@ -335,7 +334,7 @@ p <- ggplot() +
         legend.direction = 'horizontal'
   )
 
-ggsave('figs/Figure_SI_location_basins_figure_3.jpg',p,
-       width = 200,height = 120,units = 'mm',dpi = 600)
+ggsave('figs/basins_location_figure_3.jpg',p,
+       width = 200,height = 120,units = 'mm',dpi = 600,type = 'cairo')
 
 
