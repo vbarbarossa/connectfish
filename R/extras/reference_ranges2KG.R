@@ -54,4 +54,4 @@ sp_kg <- sp_data %>%
     KG = names(sort(table(kg),decreasing = T))[1]
   )
 
-
+write.csv(sp_kg,'proc/species_on_KG_climate_zones.csv',row.names = F)
