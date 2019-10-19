@@ -1,40 +1,54 @@
 source('R/MASTER.R')
 
-library(raster)
-# read raster layer with KG zones at 1km
+# reference KG to HB units-------------------------------------------------------------------------
 
-# beginCluster()
-ras <- raster(file_KG_ras)
+# read KG poly
+kg <- read_sf('proc/KG_reclass.gpkg')
 
-# reclassify the raster to simple capital letters zones (5)
-print('clamping to 1:30..')
-rc <- clamp(ras,1,30)
+# read centroids of HB units
+# determine centroids with sf
+if(file.exists('proc/hybas12_points_nolakes.gpkg')){
+  points <- read_sf('proc/hybas12_points_nolakes.gpkg')
+}else{
+  points <- foreach(cont = c('af','ar','as','au','eu','gr','na','sa','si'),.combine='rbind') %do% {
+    poly <- read_sf(paste0(dir_hybas12,'/hybas_',cont,'_lev12_v1c.shp'))
+    return(st_centroid(poly))
+  }
+  write_sf(points,'proc/hybas12_points_nolakes.gpkg',driver='GPKG')
+}
 
-print('reclassifying..')
-# reclassification matrix
-m <- matrix(
-  c(1,3,51,
-    4,7,52,
-    8,16,53,
-    17,28,54,
-    29,30,55)
-  ,ncol = 3,byrow = T)
+lst <- st_contains(kg,points,sparse = T)
 
-ras_r <- reclassify(rc,m,include.lowest=T)
+kg_hybas12 <- lapply(seq_along(lst),function(i){
+  hb <- points$HYBAS_ID[lst[[i]]]
+  if(length(hb) > 0){
+    return(
+      data.frame(HYBAS_ID = hb,
+                 kg = kg$name[i]) #<<<<<<<<<<< need to check
+    )
+  }
+}
+) %>% do.call('rbind',.) %>% distinct()
 
-print('saving to disk..')
-writeRaster(ras_r,'proc/KG_reclass.tif')
+# save?
 
-# ras[ras > 30] <- NA
-# ras[ras %in% 2:3] <- 1
-# ras[ras %in% 4:7] <- 2
-# ras[ras %in% 8:16] <- 3
-# ras[ras %in% 17:28] <- 4
-# ras[ras %in% 29:30] <- 5
+# reference KG to species--------------------------------------------------------------------------
 
-# convert raster to polygon
-print('convert to poly..')
-system(
-  'gdal_polygonize.py proc/KG_reclass.tif proc/KG_reclass.gpkg'
-)
+# read species data referenced to HB
+sp_data <- bind_rows(
+  # read hybas12 on IUCN
+  vroom('proc/hybas12_fish.csv',delim=','),
+  # read hybas12 on customRanges
+  vroom(paste0('proc/hybas12_fish_custom_ranges_occth0.csv'),delim=',')
+) %>%
+  # and join them with the kg_hybas12
+  inner_join(.,kg_hybas12,by="HYBAS_ID")
+
+# per species
+sp_kg <- sp_data %>%
+  group_by(binomial) %>%
+  summarize(
+    kg = sort(table(kg),decreasing = T)[1]
+  )
+
 
