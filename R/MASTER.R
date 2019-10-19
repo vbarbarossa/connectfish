@@ -53,3 +53,6 @@ dir_synonyms_table <- '../occ2range4fish/proc/iucn_synonyms/'
 
 # for plotting maps
 crs_custom <- "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+
+# for assigning species to KG climate zones
+file_KG_ras <- 'data/Beck_KG_V1_present_0p0083.tif'
