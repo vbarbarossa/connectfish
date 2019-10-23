@@ -8,7 +8,8 @@ CI_tab <- foreach(cont = c('af','ar','as','au','eu','gr','na','sa','si'),.combin
   filter(alpha == 0.55) %>%
   as_tibble() %>%
   mutate_each(as.numeric, starts_with("connectivity")) %>%
-  mutate_each(as.numeric, starts_with("patches"))
+  mutate_each(as.numeric, starts_with("patches")) %>%
+  filter(binomial %in% read.csv('tabs/species_ci/species_ci_oth10.csv')$binomial)
 CI_tab$category <- factor(CI_tab$category, levels = c('potamodromous','diadromous'))
 levels(CI_tab$category) <- c('Non diadromous','Diadromous')
 
