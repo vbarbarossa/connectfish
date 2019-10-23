@@ -36,14 +36,17 @@ sapply(
 
 tws$type <- factor(tws$CI,levels = c('Present','Future'))
 
+two_stage_col <- viridis(n = 40,direction = -1,alpha = 1,option = 'C')[c(5,10)] #brewer.pal('Purples',n=9)[c(4,7)]
+
 pa <- ggplot(data = tws, aes(x = area_cat, y = value, color = type)) +
-  geom_violin(draw_quantiles = c(0.25,0.5,0.75),alpha = 0.2,lwd = .5, scale = 'width') +
-  # geom_boxplot(notch = F, alpha = 0.2,outlier.size = 0.5) +
+  geom_violin(aes(fill = type),color = 'transparent',alpha = 1,lwd = .5, scale = 'width') +
+  geom_boxplot(fill='white',notch = F, outlier.size = 0.1,width = 0.2,lwd=0.5,position = position_dodge(0.9)) +
   xlab(bquote('Area of main watershed ['~log[10]~'-'~km^2~']')) +
   ylab('CI [%]') +
-  stat_summary(fun.y=mean, geom="point",fill = 'red', 
+  stat_summary(fun.y=mean, geom="point",aes(fill = type), 
                shape=23, size=1,position = position_dodge(width = 0.9),show.legend = FALSE) +
-  scale_color_manual(values = c('Grey20','Grey60')) +
+  scale_fill_manual(values = two_stage_col) +
+  scale_color_manual(values = c('Black','Black')) +
   facet_wrap('cat',ncol = 2) +
   theme_minimal() +
   theme(panel.grid = element_blank(),
@@ -63,13 +66,13 @@ t <- read.csv('tabs/species_ci/species_ci_oth10.csv') %>%
   mutate(type = factor(type, levels = c('Non diadromous','Diadromous')))
 
 library(ggplot2)
-pb <- ggplot(data = t, aes(x = variable,y = value, color = variable)) +
-  geom_violin(draw_quantiles = c(0.25,0.5,0.75),alpha = 0.2,lwd = .5, scale = 'width') +
-  # geom_boxplot(notch = F, alpha = 0.2,outlier.size = 0.5,width = 0.5, position = position_dodge2(preserve = "total")) +
-  scale_color_manual(values = c('Grey20','Grey60')) +
+pb <- ggplot(data = t, aes(x = variable,y = value)) +
+  geom_violin(aes(fill = variable),color = 'transparent',alpha = 1,lwd = .5, scale = 'width') +
+  geom_boxplot(fill='white',notch = F, outlier.size = 0.2,width = 0.1, position = position_dodge2(preserve = "total")) +
+  scale_fill_manual(values = two_stage_col) +
   ylab('CI [%]') +
   xlab(' ') +
-  stat_summary(fun.y=mean, geom="point", fill = 'red',
+  stat_summary(fun.y=mean, geom="point", aes(fill = variable),
                shape=23, size=1.5,show.legend = FALSE) +
   facet_wrap('type',ncol = 2) +
   theme_minimal() +
@@ -79,7 +82,7 @@ pb <- ggplot(data = t, aes(x = variable,y = value, color = variable)) +
         axis.text.x=element_blank(),
         panel.grid.major.y = element_line(linetype = 'dashed',color = 'grey')
         )
-# pb
+pb
 
 library(ggpubr)
 p <- ggarrange(ggplotGrob(pb + theme(legend.position = 'none',panel.grid.major.y = element_line(linetype = 'dashed',color = 'grey'))),ggplotGrob(pa),cowplot::get_legend(pb),
