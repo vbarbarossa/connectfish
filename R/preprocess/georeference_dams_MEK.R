@@ -22,6 +22,19 @@ sdams_cur <- st_as_sf(dams_cur,coords = c('X','Y'),crs=4326)
 # names already in GRanD
 names_grand <- c(as.character(grand$DAM_NAME),as.character(grand$ALT_NAME)) %>% .[!is.na(.)]
 
+t <- read.csv('C:/Users/Valerio/Downloads/regionaldams.csv') %>%
+  as_tibble() %>%
+  filter(!is.na(Lat)) %>%
+  filter(!is.na(Long)) %>%
+  filter(Status %in% c('OP','COMM','UNCON')) %>%
+  mutate(id_no = 1:nrow(.))
+
+t_l <- t %>%
+  filter(Height.m > 15)
+
+t_s <- t%>%
+  filter(!id_no %in% t_l$id_no)
+
 # large dams for brazil
 MEK_l <- read_sf('data/OpenDevelopmentMekong/OpenDevelopmentMekong_all_dams.shp') %>%
   filter(!Project_na %in% names_grand) %>% #24
