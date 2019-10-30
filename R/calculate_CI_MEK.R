@@ -16,7 +16,7 @@ main_bas_area <- hb_data %>%
   summarize(MAIN_BAS_AREA = sum(SUB_AREA))
 
 hb_data <- inner_join(hb_data,main_bas_area,by='MAIN_BAS') %>%
-  filter(MAIN_BAS == 4120017020) #ID of Mekong
+  filter(MAIN_BAS %in% c(4120017020,4120023810,4120023060))
 
 # select diadromous and non-diadromous species------------------------------------------------------------
 
@@ -245,7 +245,9 @@ arr <- sp_data %>%
 
 cat('\nCalculating CI..\n\n')
 
-global_tab <- do.call('rbind', basin_connectivity(arr$MAIN_BAS[1]))
+global_tab <- do.call('rbind', 
+                      lapply(1:nrow(arr),function(i) basin_connectivity(arr$MAIN_BAS[i]))
+                      )
 
 warnings()
 

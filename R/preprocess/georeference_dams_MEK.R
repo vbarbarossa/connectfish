@@ -22,35 +22,44 @@ sdams_cur <- st_as_sf(dams_cur,coords = c('X','Y'),crs=4326)
 # names already in GRanD
 names_grand <- c(as.character(grand$DAM_NAME),as.character(grand$ALT_NAME)) %>% .[!is.na(.)]
 
-t <- read.csv('C:/Users/Valerio/Downloads/regionaldams.csv') %>%
+t <- read.csv('data/regionaldams.csv',stringsAsFactors = F) %>%
   as_tibble() %>%
-  filter(!is.na(Lat)) %>%
-  filter(!is.na(Long)) %>%
+  mutate(X = as.numeric(Long),Y=as.numeric(Lat)) %>%
+  filter(!is.na(X)) %>%
+  filter(!is.na(Y)) %>%
   filter(Status %in% c('OP','COMM','UNCON')) %>%
-  mutate(id_no = 1:nrow(.))
+  filter(!Project.name %in% names_grand) %>% #64 removed
+  mutate(id_no = 1:nrow(.)) %>%
+  st_as_sf(.,coords = c('X','Y'),crs=4326)
 
-t_l <- t %>%
-  filter(Height.m > 15)
-
-t_s <- t%>%
-  filter(!id_no %in% t_l$id_no)
-
-# large dams for brazil
-MEK_l <- read_sf('data/OpenDevelopmentMekong/OpenDevelopmentMekong_all_dams.shp') %>%
-  filter(!Project_na %in% names_grand) %>% #24
-  filter(Height_m > 15) %>%
+MEK_l <- t %>%
+  filter(Height.m > 15) %>%
   mutate(database = 'MEK_l') %>%
   mutate(ID = 1:nrow(.)) %>%
-  select(ID,database) %>%
-  st_transform(st_crs(sdams_cur))
+  select(ID,database)
 
-MEK_s <- read_sf('data/OpenDevelopmentMekong/OpenDevelopmentMekong_all_dams.shp') %>%
-  filter(!Project_na %in% names_grand) %>% #24
-  filter(Height_m <= 15) %>%
+
+MEK_s <- t%>%
+  filter(!id_no %in% t_l$id_no) %>%
   mutate(database = 'MEK_s') %>%
   mutate(ID = 1:nrow(.)) %>%
-  select(ID,database) %>%
-  st_transform(st_crs(sdams_cur))
+  select(ID,database)
+
+# MEK_l <- read_sf('data/OpenDevelopmentMekong/OpenDevelopmentMekong_all_dams.shp') %>%
+#   filter(!Project_na %in% names_grand) %>% #24
+#   filter(Height_m > 15) %>%
+#   mutate(database = 'MEK_l') %>%
+#   mutate(ID = 1:nrow(.)) %>%
+#   select(ID,database) %>%
+#   st_transform(st_crs(sdams_cur))
+# 
+# MEK_s <- read_sf('data/OpenDevelopmentMekong/OpenDevelopmentMekong_all_dams.shp') %>%
+#   filter(!Project_na %in% names_grand) %>% #24
+#   filter(Height_m <= 15) %>%
+#   mutate(database = 'MEK_s') %>%
+#   mutate(ID = 1:nrow(.)) %>%
+#   select(ID,database) %>%
+#   st_transform(st_crs(sdams_cur))
 
 # merge G&G with MEK
 # all
@@ -67,7 +76,7 @@ large <- MEK_l %>%
 
 # read hydrobasins data
 hb_data <- foreach(i = c('as'),.combine = 'rbind') %do% read_sf(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp')) %>%
-  filter(MAIN_BAS == 4120017020) #ID of Mekong
+  filter(MAIN_BAS %in% c(4120017020,4120023810,4120023060)) #ID of Mekong, Irrawaddi, Salween
 
 # pdf('check.pdf')
 # plot(st_geometry(hb_data))
