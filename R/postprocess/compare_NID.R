@@ -2,9 +2,9 @@ source('R/MASTER.R')
 
 #------------------------------------------------------------
 #> OPTIONS
-file_GG <- 'proc/CI_tab_NID_GGonly.rds'
+file_GG <- 'proc/CI_tab_NID_large.rds'
 file_NID <- 'proc/CI_tab_NID.rds'
-dir_figures_NID <- dir_('figs/compare_NID_all/')
+dir_figures_NID <- dir_('figs/compare_NID_small/')
 
 # SPECIE SELECTION----------------------------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ occ <- read_sf(file_custom_ranges) %>%
 
 # NID comparison------------------------------------------------------------------------------------------------------
 
-for(oth in c(1,5,10,20,30,50,10**9)){
+for(oth in c(10)){
   
   # set min occurrences
   names_out <- occ$name[occ$no_occ < oth]

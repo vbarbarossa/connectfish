@@ -5,11 +5,15 @@ nid <- readRDS('proc/compare_NID.rds') %>%
   mutate(region = 'USA')
 bra <- readRDS('proc/compare_BRA.rds') %>%
   as_tibble() %>%
-  mutate(region = 'Brazil')
+  mutate(region = 'BRA')
+mis <- readRDS('proc/compare_MEK.rds') %>%
+  as_tibble() %>%
+  mutate(region = 'MIS')
 
-tab <- bind_rows(nid,bra) %>%
+
+tab <- bind_rows(nid,bra,mis) %>%
   mutate(variable = factor(variable))
-levels(tab$variable) <- c('G&G','G&G+small')
+levels(tab$variable) <- c(' ','+ small dams')
 
 p <- ggplot(data = tab, aes(x = variable, y = value)) +
   geom_violin(scale='width',color = 'transparent',fill = 'Grey70',alpha = 0.8) +
@@ -23,6 +27,6 @@ p <- ggplot(data = tab, aes(x = variable, y = value)) +
   )
 
 ggsave(filename = 'figs/compare_with_small_dams.jpg',p,
-       width = 100,height = 70,units = 'mm',dpi = 600,type='cairo')
+       width = 120,height = 70,units = 'mm',dpi = 600,type='cairo')
 
 

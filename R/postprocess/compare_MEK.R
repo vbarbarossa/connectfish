@@ -2,9 +2,9 @@ source('R/MASTER.R')
 
 #------------------------------------------------------------
 #> OPTIONS
-file_GG <- 'proc/CI_tab_BRA_large.rds'
-file_NID <- 'proc/CI_tab_BRA.rds'
-dir_figures_NID <- dir_('figs/compare_BRA_small/')
+file_GG <- 'proc/CI_tab_MEK_large.rds'
+file_NID <- 'proc/CI_tab_MEK.rds'
+dir_figures_NID <- dir_('figs/compare_MEK_small/')
 
 # SPECIE SELECTION----------------------------------------------------------------------------------------------------
 
@@ -16,6 +16,8 @@ CI_tab <- rbind(
   as_tibble() %>%
   mutate_each(as.numeric, starts_with("connectivity")) %>%
   mutate_each(as.numeric, starts_with("patches"))
+# filter(MAIN_BAS %in% c(4120017020,4120023810,4120023060)) #ID of Mekong, Irrawaddi, Salween
+bas_filter = c(4120017020,4120023810,4120023060)
 
 # split the overall CI table based on IUCN species and customRanges
 iucn_ref <- vroom('proc/hybas12_fish.csv',delim=',') %>%
@@ -60,6 +62,7 @@ for(oth in c(10)){
   # need to first filter out raw data based on hybas 
   # compute stats across each watershed
   tab_na <- bind_rows(iucnCI,customCI %>% filter(!binomial %in% names_out)) %>%
+    filter(MAIN_BAS %in% bas_filter) %>%
     # filter(MAIN_BAS %in% unique(hb_data$MAIN_BAS)) %>%
     group_by(binomial) %>%
     summarize(
@@ -85,6 +88,7 @@ for(oth in c(10)){
     mutate_each(as.numeric, starts_with("connectivity")) %>%
     mutate_each(as.numeric, starts_with("patches")) %>%
     filter(binomial %in% unique(as.character(tab_na$binomial))) %>%
+    filter(MAIN_BAS %in% bas_filter) %>%
     # filter(MAIN_BAS %in% unique(hb_data$MAIN_BAS)) %>%
     group_by(binomial) %>%
     summarize(
@@ -117,20 +121,20 @@ for(oth in c(10)){
     geom_text(data=stats,mapping = aes(x = 98, y = 20, label = rsq),hjust = 1) +
     geom_text(data=stats,mapping = aes(x = 98, y = 13, label = rmse),hjust = 1) +
     geom_text(data=stats,mapping = aes(x = 98, y = 6, label = n),hjust = 1) +
-    xlab('CI (BRA+GRanD+GOODD) [%]') +
+    xlab('CI (MIS+GRanD+GOODD) [%]') +
     ylab('CI (GRanD+GOODD) [%]') +
     coord_cartesian(expand=F) +
     facet_wrap('type',ncol = 2) +
     theme_bw()
-  ggsave(paste0(dir_figures_NID,'compare_BRA_oth',oth,'.jpg'),p,width = 200, height = 100,units = 'mm',type='cairo')
+  ggsave(paste0(dir_figures_NID,'compare_MEK_oth',oth,'.jpg'),p,width = 200, height = 100,units = 'mm',type='cairo')
   
   
   p <- ggplot(compare_na_nid %>% reshape2::melt(data=.,id.vars = c('binomial','type')) %>% as_tibble()) +
     geom_boxplot(aes(x = type, y = value, color = variable)) +
     theme_bw()
-  ggsave(paste0(dir_figures_NID,'compare_BRA_oth',oth,'_boxplot.jpg'),p,width = 200, height = 100,units = 'mm',type='cairo')
+  ggsave(paste0(dir_figures_NID,'compare_MEK_oth',oth,'_boxplot.jpg'),p,width = 200, height = 100,units = 'mm',type='cairo')
   
-  if(oth == 10) saveRDS(compare_na_nid %>% reshape2::melt(data=.,id.vars = c('binomial','type')),'proc/compare_BRA.rds')
+  if(oth == 10) saveRDS(compare_na_nid %>% reshape2::melt(data=.,id.vars = c('binomial','type')),'proc/compare_MEK.rds')
   
 }
 
