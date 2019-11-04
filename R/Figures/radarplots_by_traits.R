@@ -126,12 +126,14 @@ tab$kg_main <- factor(tab$kg_main,levels = rev(LETTERS[1:5]))
 #Body Length
 tab$lengthcat <- NA
 tab$lengthcat[!is.na(tab$Length)] <- '<5'
-tab$lengthcat[tab$Length >= 5] <- '5-10'
-tab$lengthcat[tab$Length >= 10] <- '10-30'
-tab$lengthcat[tab$Length >= 30] <- '30-80'
-tab$lengthcat[tab$Length >= 80] <- '80-200'
-tab$lengthcat[tab$Length >= 200] <- '>200'
-tab$lengthcat <- factor(tab$lengthcat,levels = c('>200','80-200','30-80','10-30','5-10','<5'))
+tab$lengthcat[tab$Length >= 5 & !is.na(tab$Length)] <- '5-10'
+tab$lengthcat[tab$Length >= 10 & !is.na(tab$Length)] <- '10-30'
+tab$lengthcat[tab$Length >= 30 & !is.na(tab$Length)] <- '30-70'
+tab$lengthcat[tab$Length >= 70 & !is.na(tab$Length)] <- '70-100'
+tab$lengthcat[tab$Length >= 100 & !is.na(tab$Length)] <- '>=100'
+
+tab$lengthcat <- factor(tab$lengthcat,levels = c('>=100','70-100','30-70','10-30','5-10','<5'))
+table(tab$lengthcat)
 
 tab <- droplevels(tab)
 
@@ -142,7 +144,8 @@ library(ggplot2); library(grid); library(ggplotify); library(RColorBrewer)
 # reshape table
 tab <- tab %>%
   reshape2::melt(.,measure.vars = c('ci_currentW','ci_futureW')) %>%
-  as_tibble() 
+  as_tibble() %>%
+  filter(!is.na(value))
 levels(tab$variable) <- c('Current CI','Future CI')
 
 catv <- c('kg_main','rangesizecat','lengthcat','code','Importance','order_')
@@ -172,7 +175,7 @@ radplots <- foreach(i = seq_along(catv)) %do% {
       return(res2)
     }
   }
-  
+
   data <- data[,data[1,] >= n_min]
   
   colnames(data) <- paste0(colnames(data),'\n(',as.integer(data['n',]),')')
@@ -238,8 +241,8 @@ fig <- ggarrange(
   ggarrange(plotlist=radplots,ncol= 3, nrow = length(catv)/3, labels = letters[1:length(catv)]),
   legend,
   ncol = 1,nrow = 2,heights = c((length(catv)/3),0.1))
-cowplot::ggsave('figs/radarplots_by_traits_mean.jpg',fig,
-                width = 220,height = (230*length(catv)/3/3),units='mm',dpi = 600,scale = 1.2,type='cairo')
+ggsave('figs/radarplots_by_traits_mean.jpg',fig,
+                width = 220,height = (230*length(catv)/3/3),units='mm',dpi = 600,scale = 1.2)
 
 
 #> RADAR PLOTS MEDIAN
