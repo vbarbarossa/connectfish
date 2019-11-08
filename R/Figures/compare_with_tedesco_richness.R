@@ -31,13 +31,19 @@ ranges_bas <- inner_join(ranges,ted %>% select(HYBAS_ID,BasinName)) %>%
 tab <- inner_join(ranges_bas,ted_occ) %>%
   mutate(ratio = no_species_ranges/no_species*100) # percentage difference
 
+
+
 sum(tab$ratio > 100)
 sum(tab$ratio < 100)
 
 tab_sf <- inner_join(read_sf(paste0(dir_ted_bas,'Basin042017_3119.shp')),tab) %>%
-  select(BasinName,Country,Ecoregion,no_species_ranges,no_species,ratio,geometry)
+  select(BasinName,Country,Ecoregion,no_species_ranges,no_species,ratio,geometry,Surf_area)
 
 tab_sf$ratio[tab_sf$ratio > 100] <- 100
+
+# weighted mean
+sum(tab_sf$ratio*tab_sf$Surf_area)/sum(tab_sf$Surf_area)
+
 
 # plot the ratio-------------------------------------------------------------------------------------
 world <- rnaturalearth::ne_countries(returnclass = "sf")
