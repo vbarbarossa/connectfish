@@ -60,6 +60,41 @@ p
 ggsave(filename = 'figs/compare_with_large_dams_violin.jpg',p,
        width = 100,height = 100,units = 'mm',dpi = 1000,type='cairo')
 
+source('R/MASTER.R')
+
+nid <- readRDS('proc/compare_NID_large.rds') %>%
+  as_tibble() %>%
+  mutate(region = 'United States')
+bra <- readRDS('proc/compare_BRA_large.rds') %>%
+  as_tibble() %>%
+  mutate(region = 'Brazil')
+mis <- readRDS('proc/compare_MEK_large.rds') %>%
+  as_tibble() %>%
+  mutate(region = 'Greater Mekong')
+
+
+
+tab <- bind_rows(nid,bra,mis) %>%
+  mutate(variable = factor(variable))
+levels(tab$variable) <- c('G&G','G&G+large')
+
+p <- ggplot(data = tab, aes(x = variable, y = value)) +
+  geom_violin(scale='width',color = 'transparent',fill = 'Grey70',alpha = 0.8) +
+  geom_boxplot(fill = 'white',width = 0.1) +
+  facet_wrap('region') +
+  xlab(' ') +
+  ylab('CI [%]') +
+  stat_summary(fun.y=mean, geom="point", aes(fill = variable),
+               shape=23, size=2,show.legend = FALSE, color = 'black',fill='red') +
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        panel.grid.major.y = element_line(linetype = 'dashed',color = 'grey')
+  )
+p
+ggsave(filename = 'figs/compare_with_large_dams.jpg',p,
+       width = 114,height = 87,units = 'mm',dpi = 1000,type='cairo')
+ggsave(filename = 'figs/compare_with_large_dams.pdf',p,
+       width = 114,height = 87,units = 'mm')
 
 # # A tibble: 3 x 5
 # region         rsq       rmse      n        mean_diff
