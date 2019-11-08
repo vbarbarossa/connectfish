@@ -28,6 +28,8 @@ tab$code[tab$code %in% c('EX','EW')] <- 'DD' # there are supposedly still 4 exti
 tab$code[tab$code %in% c('LRlc')] <- 'LC'
 tab$code[tab$code %in% c('LRnt')] <- 'NT'
 
+tab$code <- factor(tab$code, levels = c('DD','NT','LC','VU','EN','CR'))
+
 # fishbase metadata***********************************************************
 # taxonomy
 tax <- rfishbase::fishbase %>% as_tibble()
@@ -137,6 +139,7 @@ table(tab$lengthcat)
 
 tab <- droplevels(tab)
 
+# reorder IUCN categories
 #---------------------------------------------
 #> RADAR PLOTS
 library(ggplot2); library(grid); library(ggplotify); library(RColorBrewer)
@@ -241,80 +244,86 @@ fig <- ggarrange(
   ggarrange(plotlist=radplots,ncol= 3, nrow = length(catv)/3, labels = letters[1:length(catv)]),
   legend,
   ncol = 1,nrow = 2,heights = c((length(catv)/3),0.1))
+# ggsave('figs/radarplots_by_traits_mean.jpg',fig,
+#                 width = 220,height = (230*length(catv)/3/3),units='mm',dpi = 600,scale = 1.2)
+
 ggsave('figs/radarplots_by_traits_mean.jpg',fig,
-                width = 220,height = (230*length(catv)/3/3),units='mm',dpi = 600,scale = 1.2)
+                width = 174,height = 174*0.7,units='mm',dpi = 1000,scale = 1.2)
+ggsave('figs/radarplots_by_traits_mean.pdf',fig,
+       width = 174,height = 174*0.7,units='mm',scale = 1.4)
 
 
-#> RADAR PLOTS MEDIAN
 
-# catv <- c('kg_main','habtype','AnaCat','rangesizecat','lengthcat','foodtrophcat','code','Importance','order_')
-catv <- c('kg_main','rangesizecat','lengthcat','code','Importance','order_')
-# nchar_namesv <- c(rep(NA,5),4)
-tit = NULL
-
-# n_minv=c(rep(5,5),20)
-size_namesv = c(rep(0.8,5),0.6)
-
-radplots <- foreach(i = seq_along(catv)) %do% {
-  
-  cat <- catv[i]
-  n_min <- 1 #n_minv[i]
-  nchar_names <- NA #nchar_namesv[i]
-  size_names <- size_namesv[i]
-  
-  data <- foreach(type = levels(tab$variable),.combine = 'rbind') %do% {
-    t <- tab[tab$variable == type,]
-    ts <- split(t,t[,cat])
-    res <- do.call('cbind',lapply(ts,function(x) {x = x[!is.na(x$value),]; c(nrow(x),median(x$value))}))
-    row.names(res) <- c('n',type)
-    if(type == levels(tab$variable)[1]){
-      return(as.data.frame(res))
-    }else{
-      res2 <- t(as.data.frame(res[2,]))
-      row.names(res2) <- type
-      return(res2)
-    }
-  }
-  
-  data <- data[,data[1,] >= n_min]
-  
-  colnames(data) <- paste0(colnames(data),'\n(',as.integer(data['n',]),')')
-  
-  data <- rbind(rep(100,ncol(data)),rep(0,ncol(data)),data[2:nrow(data),])
-  
-  library(viridis)
-  two_stage_col <- viridis(n = 40,direction = -1,alpha = 0.7,option = 'C')[c(5,10)] #brewer.pal('Purples',n=9)[c(4,7)]
-  
-  custom_pal <- two_stage_col
-  colors_border<- custom_pal
-  colors_in <- do.call('c',lapply(custom_pal,function(x) rgb(t(col2rgb(x)) ,alpha = 150,maxColorValue = 255)))
-  
-  
-  # par(mar = c(0,0,0,0),oma = c(0,0,0,0))
-  library(ggplot2); library(ggplotify)
-  p <- ggplotGrob(
-    as.ggplot(
-      ~radarchart( data  , axistype=1 , pty=32, seg=4,
-                   #custom polygon
-                   pcol=colors_border , pfcol=colors_in , plwd=2 , plty=1,
-                   #custom the grid
-                   cglty=1, cglwd=1, cglcol="black", axislabcol="black", calcex = 0.7, caxislabels=c('0%','','50%','',''), #caxislabels=paste0(seq(0,100,25),'%'),
-                   #custom labels
-                   vlcex=size_names,title = tit)
-    ) + theme(plot.margin = unit(c(-0.5, -0.5, -2, -2), "cm"))
-  )
-  
-  return(p)
-  
-}
-
-
-library(ggpubr)
-fig <- ggarrange(
-  ggarrange(plotlist=radplots,ncol= 3, nrow = length(catv)/3, labels = letters[1:length(catv)]),
-  legend,
-  ncol = 1,nrow = 2,heights = c((length(catv)/3),0.1))
-cowplot::ggsave('figs/radarplots_by_traits_median.jpg',fig,
-                width = 220,height = (230*length(catv)/3/3),units='mm',dpi = 600,scale = 1.2,type='cairo')
-
+# #> RADAR PLOTS MEDIAN------------------------------------------------------------------------------------------------
+# 
+# # catv <- c('kg_main','habtype','AnaCat','rangesizecat','lengthcat','foodtrophcat','code','Importance','order_')
+# catv <- c('kg_main','rangesizecat','lengthcat','code','Importance','order_')
+# # nchar_namesv <- c(rep(NA,5),4)
+# tit = NULL
+# 
+# # n_minv=c(rep(5,5),20)
+# size_namesv = c(rep(0.8,5),0.6)
+# 
+# radplots <- foreach(i = seq_along(catv)) %do% {
+#   
+#   cat <- catv[i]
+#   n_min <- 1 #n_minv[i]
+#   nchar_names <- NA #nchar_namesv[i]
+#   size_names <- size_namesv[i]
+#   
+#   data <- foreach(type = levels(tab$variable),.combine = 'rbind') %do% {
+#     t <- tab[tab$variable == type,]
+#     ts <- split(t,t[,cat])
+#     res <- do.call('cbind',lapply(ts,function(x) {x = x[!is.na(x$value),]; c(nrow(x),median(x$value))}))
+#     row.names(res) <- c('n',type)
+#     if(type == levels(tab$variable)[1]){
+#       return(as.data.frame(res))
+#     }else{
+#       res2 <- t(as.data.frame(res[2,]))
+#       row.names(res2) <- type
+#       return(res2)
+#     }
+#   }
+#   
+#   data <- data[,data[1,] >= n_min]
+#   
+#   colnames(data) <- paste0(colnames(data),'\n(',as.integer(data['n',]),')')
+#   
+#   data <- rbind(rep(100,ncol(data)),rep(0,ncol(data)),data[2:nrow(data),])
+#   
+#   library(viridis)
+#   two_stage_col <- viridis(n = 40,direction = -1,alpha = 0.7,option = 'C')[c(5,10)] #brewer.pal('Purples',n=9)[c(4,7)]
+#   
+#   custom_pal <- two_stage_col
+#   colors_border<- custom_pal
+#   colors_in <- do.call('c',lapply(custom_pal,function(x) rgb(t(col2rgb(x)) ,alpha = 150,maxColorValue = 255)))
+#   
+#   
+#   # par(mar = c(0,0,0,0),oma = c(0,0,0,0))
+#   library(ggplot2); library(ggplotify)
+#   p <- ggplotGrob(
+#     as.ggplot(
+#       ~radarchart( data  , axistype=1 , pty=32, seg=4,
+#                    #custom polygon
+#                    pcol=colors_border , pfcol=colors_in , plwd=2 , plty=1,
+#                    #custom the grid
+#                    cglty=1, cglwd=1, cglcol="black", axislabcol="black", calcex = 0.7, caxislabels=c('0%','','50%','',''), #caxislabels=paste0(seq(0,100,25),'%'),
+#                    #custom labels
+#                    vlcex=size_names,title = tit)
+#     ) + theme(plot.margin = unit(c(-0.5, -0.5, -2, -2), "cm"))
+#   )
+#   
+#   return(p)
+#   
+# }
+# 
+# 
+# library(ggpubr)
+# fig <- ggarrange(
+#   ggarrange(plotlist=radplots,ncol= 3, nrow = length(catv)/3, labels = letters[1:length(catv)]),
+#   legend,
+#   ncol = 1,nrow = 2,heights = c((length(catv)/3),0.1))
+# cowplot::ggsave('figs/radarplots_by_traits_median.jpg',fig,
+#                 width = 220,height = (230*length(catv)/3/3),units='mm',dpi = 600,scale = 1.2,type='cairo')
+# 
 
