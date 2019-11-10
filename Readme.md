@@ -1,6 +1,6 @@
 # connectfish
 
-###DISCLAIMER: working in progress. The full description of the code will be released upon acceptance of the related manuscript currently under review
+### DISCLAIMER: work in progress! The full description of the code will be released upon acceptance of the related manuscript currently under review
 
 ## Settings
 - **MASTER.R** this is used to setup files and directories connections and other model parameters
