@@ -37,7 +37,7 @@ sapply(
 tws$type <- factor(tws$CI,levels = c('Present','Future'))
 tws$cat <- factor(tws$cat,levels = c('Non diadromous','Diadromous'))
 
-two_stage_col <- viridis(n = 40,direction = -1,alpha = 1,option = 'C')[c(5,10)] #brewer.pal('Purples',n=9)[c(4,7)]
+two_stage_col <- RColorBrewer::brewer.pal(9,'BuPu')[c(8,3)]#viridis(n = 40,direction = -1,alpha = 1,option = 'C')[c(5,10)] #brewer.pal('Purples',n=9)[c(4,7)]
 
 pa <- ggplot(data = tws, aes(x = area_cat, y = value, color = type)) +
   geom_violin(aes(fill = type),color = 'transparent',alpha = 1,lwd = .5, scale = 'width') +

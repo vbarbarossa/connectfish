@@ -141,6 +141,8 @@ tab <- droplevels(tab)
 
 # reorder IUCN categories
 #---------------------------------------------
+
+
 #> RADAR PLOTS
 library(ggplot2); library(grid); library(ggplotify); library(RColorBrewer)
 
@@ -151,107 +153,128 @@ tab <- tab %>%
   filter(!is.na(value))
 levels(tab$variable) <- c('Current CI','Future CI')
 
-catv <- c('kg_main','rangesizecat','lengthcat','code','Importance','order_')
+# catv <- c('kg_main','rangesizecat','lengthcat','code','Importance','order_')
 # nchar_namesv <- c(rep(NA,5),4)
-tit = NULL
-
-# n_minv=c(rep(5,5),20)
+# tit = NULL
+catv=c('kg_main','rangesizecat','lengthcat','code','Importance','order_')
 size_namesv = c(rep(0.8,5),0.6)
+tit=NULL
 
-radplots <- foreach(i = seq_along(catv)) %do% {
+# try a few colors
+library(viridis)
+barplot(rep(5,9),col = viridis(n = 9,direction = -1,alpha = 0.7,option = 'A'))
+barplot(rep(5,9),col = viridis(n = 9,direction = -1,alpha = 0.7,option = 'B'))
+barplot(rep(5,2),col = viridis(n = 40,direction = -1,alpha = 0.7,option = 'C')[c(5,15)])
+barplot(rep(5,9),col = viridis(n = 9,direction = -1,alpha = 0.7,option = 'D'))
+barplot(rep(5,9),col = RColorBrewer::brewer.pal(9,'YlGnBu'))
+barplot(rep(5,9),col = RColorBrewer::brewer.pal(9,'YlOrRd'))
+barplot(rep(5,9),col = RColorBrewer::brewer.pal(9,'BuPu'))
+
+# create a list of favourite binomial colors
+two_stage_col_list <- list(
+  viridis(n = 9,direction = -1,alpha = 0.7,option = 'C')[c(3,6)],
+  viridis(n = 9,direction = -1,alpha = 0.7,option = 'C')[c(2,7)],
+  viridis(n = 9,direction = -1,alpha = 0.7,option = 'C')[c(8,4)],
+  viridis(n = 9,direction = -1,alpha = 0.7,option = 'C')[c(8,3)],
+  RColorBrewer::brewer.pal(9,'YlGnBu')[c(7,3)],
+  RColorBrewer::brewer.pal(9,'YlGnBu')[c(3,7)],
+  RColorBrewer::brewer.pal(9,'YlGnBu')[c(5,8)],
+  RColorBrewer::brewer.pal(9,'YlGnBu')[c(8,5)],
+  RColorBrewer::brewer.pal(9,'YlOrRd')[c(3,7)],
+  RColorBrewer::brewer.pal(9,'YlOrRd')[c(7,3)],
+  RColorBrewer::brewer.pal(9,'BuPu')[c(3,8)],
+  RColorBrewer::brewer.pal(9,'BuPu')[c(8,3)],
+  viridis(n = 40,direction = -1,alpha = 0.7,option = 'C')[c(5,10)],
+  viridis(n = 40,direction = -1,alpha = 0.7,option = 'C')[c(10,5)],
+  viridis(n = 40,direction = -1,alpha = 0.7,option = 'C')[c(5,15)],
+  viridis(n = 40,direction = -1,alpha = 0.7,option = 'C')[c(15,5)],
+  viridis(n = 40,direction = -1,alpha = 0.7,option = 'C')[c(5,20)],
+  viridis(n = 40,direction = -1,alpha = 0.7,option = 'C')[c(20,5)]
+)
+
+
+figures <- foreach(i = seq_along(two_stage_col_list)) %do% {
   
-  cat <- catv[i]
-  n_min <- 1 #n_minv[i]
-  nchar_names <- NA #nchar_namesv[i]
-  size_names <- size_namesv[i]
-  
-  data <- foreach(type = levels(tab$variable),.combine = 'rbind') %do% {
-    t <- tab[tab$variable == type,]
-    ts <- split(t,t[,cat])
-    res <- do.call('cbind',lapply(ts,function(x) {x = x[!is.na(x$value),]; c(nrow(x),mean(x$value))}))
-    row.names(res) <- c('n',type)
-    if(type == levels(tab$variable)[1]){
-      return(as.data.frame(res))
-    }else{
-      res2 <- t(as.data.frame(res[2,]))
-      row.names(res2) <- type
-      return(res2)
+  two_stage_col <- two_stage_col_list[[i]]
+  radplots <- foreach(i = seq_along(catv)) %do% {
+    
+    cat <- catv[i]
+    n_min <- 1 #n_minv[i]
+    nchar_names <- NA #nchar_namesv[i]
+    size_names <- size_namesv[i]
+    
+    data <- foreach(type = levels(tab$variable),.combine = 'rbind') %do% {
+      t <- tab[tab$variable == type,]
+      ts <- split(t,t[,cat])
+      res <- do.call('cbind',lapply(ts,function(x) {x = x[!is.na(x$value),]; c(nrow(x),mean(x$value))}))
+      row.names(res) <- c('n',type)
+      if(type == levels(tab$variable)[1]){
+        return(as.data.frame(res))
+      }else{
+        res2 <- t(as.data.frame(res[2,]))
+        row.names(res2) <- type
+        return(res2)
+      }
     }
+    
+    data <- data[,data[1,] >= n_min]
+    
+    colnames(data) <- paste0(colnames(data),'\n(',as.integer(data['n',]),')')
+    
+    data <- rbind(rep(100,ncol(data)),rep(0,ncol(data)),data[2:nrow(data),])
+    
+    custom_pal <- two_stage_col
+    colors_border<- custom_pal
+    colors_in <- do.call('c',lapply(custom_pal,function(x) rgb(t(col2rgb(x)) ,alpha = 150,maxColorValue = 255)))
+    
+    
+    # par(mar = c(0,0,0,0),oma = c(0,0,0,0))
+    library(ggplot2); library(ggplotify)
+    p <- ggplotGrob(
+      as.ggplot(
+        ~radarchart( data  , axistype=1 , pty=32, seg=4,
+                     #custom polygon
+                     pcol=colors_border , pfcol=colors_in , plwd=2 , plty=1,
+                     #custom the grid
+                     cglty=1, cglwd=1, cglcol="black", axislabcol="black", calcex = 0.7, caxislabels=c('0%','','50%','',''), #caxislabels=paste0(seq(0,100,25),'%'),
+                     #custom labels
+                     vlcex=size_names,title = tit)
+      ) + theme(plot.margin = unit(c(-0.5, -0.5, -2, -2), "cm"))
+    )
+    
+    return(p)
+    
   }
-
-  data <- data[,data[1,] >= n_min]
   
-  colnames(data) <- paste0(colnames(data),'\n(',as.integer(data['n',]),')')
+  #------------------------------------------------------------
+  #> LEGEND
+  p_leg <- ggplot(tab,aes(x = area,y = value,color = variable)) +
+    geom_point(alpha = 1) +
+    scale_color_manual(values = two_stage_col) +
+    guides(colour = guide_legend(title=NULL,override.aes = list(size = 3))) +
+    theme_bw() +
+    theme(legend.direction = 'horizontal',
+          text = element_text(size = 15))
   
-  data <- rbind(rep(100,ncol(data)),rep(0,ncol(data)),data[2:nrow(data),])
-  
-  library(viridis)
-  two_stage_col <- viridis(n = 40,direction = -1,alpha = 0.7,option = 'C')[c(5,10)] #brewer.pal('Purples',n=9)[c(4,7)]
-  
-  custom_pal <- two_stage_col
-  colors_border<- custom_pal
-  colors_in <- do.call('c',lapply(custom_pal,function(x) rgb(t(col2rgb(x)) ,alpha = 150,maxColorValue = 255)))
+  tmp <- ggplot_gtable(ggplot_build(p_leg)) 
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box") 
+  legend <- tmp$grobs[[leg]] 
   
   
-  # par(mar = c(0,0,0,0),oma = c(0,0,0,0))
-  library(ggplot2); library(ggplotify)
-  p <- ggplotGrob(
-    as.ggplot(
-      ~radarchart( data  , axistype=1 , pty=32, seg=4,
-                   #custom polygon
-                   pcol=colors_border , pfcol=colors_in , plwd=2 , plty=1,
-                   #custom the grid
-                   cglty=1, cglwd=1, cglcol="black", axislabcol="black", calcex = 0.7, caxislabels=c('0%','','50%','',''), #caxislabels=paste0(seq(0,100,25),'%'),
-                   #custom labels
-                   vlcex=size_names,title = tit)
-    ) + theme(plot.margin = unit(c(-0.5, -0.5, -2, -2), "cm"))
-  )
+  library(ggpubr)
+  fig <- ggarrange(
+    ggarrange(plotlist=radplots,ncol= 3, nrow = length(catv)/3, labels = letters[1:length(catv)]),
+    legend,
+    ncol = 1,nrow = 2,heights = c((length(catv)/3),0.1))
   
-  return(p)
-  
+  return(fig)
 }
+dir_('figs/radarplots')
+for(i in seq_along(figures)) ggsave(paste0('figs/radarplots/',i,'.jpg'),figures[[i]],
+                                    width = 174,height = 174*0.7,units='mm',dpi = 1000,scale = 1.4)
 
-#------------------------------------------------------------
-#> LEGEND
-p_leg <- ggplot(tab,aes(x = area,y = value,color = variable)) +
-  geom_point(alpha = 1) +
-  scale_color_manual(values = two_stage_col) +
-  guides(colour = guide_legend(title=NULL,override.aes = list(size = 3))) +
-  theme_bw() +
-  theme(legend.direction = 'horizontal',
-        text = element_text(size = 15))
-
-tmp <- ggplot_gtable(ggplot_build(p_leg)) 
-leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box") 
-legend <- tmp$grobs[[leg]] 
-
-
-# grid.draw(legend)
-
-
-#------------------------------------------------------------
-#> DRAWING
-# library(ggpubr)
-# fig <- ggarrange(
-#   ggarrange(plotlist=radplots,ncol= 3, nrow = 2, labels = LETTERS[1:6]),
-#   legend,
-#   ggarrange(plotlist=scatterplots,ncol= 3, nrow = 1, labels = LETTERS[7:9]),
-#   ncol = 1,nrow = 3,heights = c(2,0.1,1))
-# cowplot::ggsave(paste0(dir_mod,'figs/Figure_4_maj50_1.jpg'),fig,width = 220,height = 230,units='mm',dpi = 600)
-
-library(ggpubr)
-fig <- ggarrange(
-  ggarrange(plotlist=radplots,ncol= 3, nrow = length(catv)/3, labels = letters[1:length(catv)]),
-  legend,
-  ncol = 1,nrow = 2,heights = c((length(catv)/3),0.1))
-# ggsave('figs/radarplots_by_traits_mean.jpg',fig,
-#                 width = 220,height = (230*length(catv)/3/3),units='mm',dpi = 600,scale = 1.2)
-
-ggsave('figs/radarplots_by_traits_mean.jpg',fig,
-                width = 174,height = 174*0.7,units='mm',dpi = 1000,scale = 1.2)
-ggsave('figs/radarplots_by_traits_mean.pdf',fig,
+ggsave('figs/radarplot.pdf',figures[[12]],
        width = 174,height = 174*0.7,units='mm',scale = 1.4)
-
 
 
 # #> RADAR PLOTS MEDIAN------------------------------------------------------------------------------------------------
