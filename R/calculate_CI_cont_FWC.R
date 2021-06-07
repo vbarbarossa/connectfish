@@ -242,7 +242,7 @@ names_fut <- gsub('.csv','',list.files('data/IWC2_Remain_HE_SP/'))
 for(nf in names_fut){
   
   # future dams
-  dams_fut <- readRDS('proc/dams_future_hydrobasins',nf,'.rds') %>%
+  dams_fut <- readRDS(paste0('proc/dams_future_hydrobasins',nf,'.rds')) %>%
     filter(HYBAS_ID %in% hb_data$HYBAS_ID)
   
   # execution in parallel---------------------------------------------------------------------------------------------
