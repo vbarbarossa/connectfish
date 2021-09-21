@@ -22,15 +22,21 @@ hb_data <- inner_join(hb_data,main_bas_area,by='MAIN_BAS')
 cat('\nRetrieving diadromous species from fishbase..')
 
 # load fishbase metadata
-fishbase <- taxonomy() %>% # get all species available (vector)
-  species(.,fields = c('Species','AnaCat')) %>% # get species table for all species
+fishbase <- species(fields = c('Species','AnaCat')) %>% # get species table for all species
   rename(binomial = Species)
+fishbase$AnaCat <- as.factor(fishbase$AnaCat)
+levels(fishbase$AnaCat) <- c(rep('Diad.',13),'Non.','Ocea.','Ocea.','Pota.','Pota.')
 
-fishbase$AnaCat <- as.factor(fishbase$AnaCat) 
-levels(fishbase$AnaCat) <- c(rep('Diad.',6),'Non.','Ocea.','Ocea.','Pota.','Pota.')
+# outdated for rfishbase
+# fishbase <- taxonomy() %>% # get all species available (vector)
+#   species(.,fields = c('Species','AnaCat')) %>% # get species table for all species
+#   rename(binomial = Species)
+# 
+# fishbase$AnaCat <- as.factor(fishbase$AnaCat) 
+# levels(fishbase$AnaCat) <- c(rep('Diad.',6),'Non.','Ocea.','Ocea.','Pota.','Pota.')
 # table(fishbase$AnaCat)
 
-# Species rage data --------------------------------------------------------------------------------------
+# Species range data --------------------------------------------------------------------------------------
 
 cat('\nReading species data..')
 
@@ -237,7 +243,7 @@ dams_cur <- readRDS('proc/dams_current_hydrobasins.rds') %>%
   filter(HYBAS_ID %in% hb_data$HYBAS_ID)
 
 # future dams
-names_fut <- gsub('.csv','',list.files('data/IWC2_Remain_HE_SP/'))
+names_fut <- gsub('.csv','',list.files('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/'))
 
 for(nf in names_fut){
   

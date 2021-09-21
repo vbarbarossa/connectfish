@@ -23,7 +23,7 @@ st_write(sdams_cur,'proc/dams_current.gpkg')
 
 #-------------------------------------------------------------------------
 #>> Hydrobasins data
-dir_hybas12 <- '~/surfdrive/data/HydroBASINS/global_lev12'
+# dir_hybas12 <- '~/surfdrive/data/HydroBASINS/global_lev12'
 # read hydrobasins data
 hb_data <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combine = 'rbind') %do% read_sf(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp')) %>% st_buffer(0)
 
@@ -33,10 +33,10 @@ saveRDS(sdams_cur_hb %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),'proc/d
 
 
 # future dams
-names_fut <- gsub('.csv','',list.files('data/IWC2_Remain_HE_SP/'))
+names_fut <- gsub('.csv','',list.files('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/'))
 
 for(n in names_fut){
-  dams_fut <- read.csv(paste0('data/IWC2_Remain_HE_SP/',n,'.csv'))
+  dams_fut <- read.csv(paste0('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/',n,'.csv'))
   # convert to spatial points
   sdams_fut <- st_as_sf(dams_fut,coords = c('lon','lat'),crs=4326)
   
