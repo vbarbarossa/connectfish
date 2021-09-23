@@ -33,16 +33,25 @@ saveRDS(sdams_cur_hb %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),'proc/d
 
 
 # future dams
-names_fut <- gsub('.csv','',list.files('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/'))
+# names_fut <- gsub('.csv','',list.files('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/'))
+names_fut <- readxl::excel_sheets('data/FWC_Dams.xlsx')
 
 for(n in names_fut){
-  dams_fut <- read.csv(paste0('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/',n,'.csv'))
+  
+  # dams_fut <- read.csv(paste0('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/',n,'.csv'))
+  dams_fut <- readxl::read_excel('data/FWC_Dams.xlsx',sheet = n)
+  
   # convert to spatial points
   sdams_fut <- st_as_sf(dams_fut,coords = c('lon','lat'),crs=4326)
   
+  # write for 2050 and 2100 time horizons
+  sdams_fut_2050 <- sdams_fut %>% filter(Year <= 2050)
+  st_write(sdams_fut_2050,paste0('proc/dams_future_',n,'_2050.gpkg'))
   st_write(sdams_fut,paste0('proc/dams_future_',n,'.gpkg'))
   
   sdams_fut_hb <- st_intersection(hb_data,sdams_fut)
+  sdams_fut_hb_2050 <- st_intersection(hb_data,sdams_fut_2050)
+  saveRDS(sdams_fut_hb_2050 %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),paste0('proc/dams_future_hydrobasins',n,'_2050.rds'))
   saveRDS(sdams_fut_hb %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),paste0('proc/dams_future_hydrobasins',n,'.rds'))
   
 }

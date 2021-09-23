@@ -243,7 +243,8 @@ dams_cur <- readRDS('proc/dams_current_hydrobasins.rds') %>%
   filter(HYBAS_ID %in% hb_data$HYBAS_ID)
 
 # future dams
-names_fut <- gsub('.csv','',list.files('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/'))
+# names_fut <- gsub('.csv','',list.files('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/'))
+names_fut <- readxl::excel_sheets('data/FWC_Dams.xlsx')
 
 for(nf in names_fut){
   
