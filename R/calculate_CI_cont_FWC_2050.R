@@ -249,7 +249,7 @@ names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v1.xlsx')
 for(nf in names_fut){
   
   # future dams
-  dams_fut <- readRDS(paste0('proc/dams_future_hydrobasins',nf,'.rds')) %>%
+  dams_fut <- readRDS(paste0('proc/dams_future_hydrobasins',nf,'_2050.rds')) %>%
     filter(HYBAS_ID %in% hb_data$HYBAS_ID)
   
   # execution in parallel---------------------------------------------------------------------------------------------
@@ -282,6 +282,6 @@ for(nf in names_fut){
   cat('\nSaving CI table..\n\n')
   
   
-  saveRDS(global_tab,paste0('proc/CI_tab_global_',cont,'_',nf,'.rds'))
+  saveRDS(global_tab,paste0('proc/CI_tab_global_',cont,'_',nf,'_2050.rds'))
 }
 

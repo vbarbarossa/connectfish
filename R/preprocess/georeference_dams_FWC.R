@@ -19,7 +19,7 @@ dams_cur <- rbind(
 # convert to sf spatial points
 sdams_cur <- st_as_sf(dams_cur,coords = c('X','Y'),crs=4326)
 
-st_write(sdams_cur,'proc/dams_current.gpkg')
+st_write(sdams_cur,'proc/dams_current.gpkg', delete_dsn = T)
 
 #-------------------------------------------------------------------------
 #>> Hydrobasins data
@@ -34,12 +34,11 @@ saveRDS(sdams_cur_hb %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),'proc/d
 
 # future dams
 # names_fut <- gsub('.csv','',list.files('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/'))
-names_fut <- readxl::excel_sheets('data/FWC_Dams.xlsx')
+names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v1.xlsx')
 
 for(n in names_fut){
   
-  # dams_fut <- read.csv(paste0('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/',n,'.csv'))
-  dams_fut <- readxl::read_excel('data/FWC_Dams.xlsx',sheet = n)
+  dams_fut <- readxl::read_excel('data/FWC_Dams_Remain_low_med_high_v1.xlsx',sheet = n)[-1,] # first line are all zeroes
   
   # convert to spatial points
   sdams_fut <- st_as_sf(dams_fut,coords = c('lon','lat'),crs=4326)
