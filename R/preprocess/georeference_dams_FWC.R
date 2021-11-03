@@ -3,6 +3,8 @@ source('R/MASTER.R')
 #-------------------------------------------------------------------------
 #>> Dams data
 
+input_FWC_data <- 'data/FWC_Dams_Remain_low_med_high_v2.xlsx'
+
 #GRanD v1.3
 grand <- st_read(file_grand_dams) #7,320
 # GOOD2 unsnapped
@@ -34,24 +36,43 @@ saveRDS(sdams_cur_hb %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),'proc/d
 
 # future dams
 # names_fut <- gsub('.csv','',list.files('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/'))
-names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v1.xlsx')
+names_fut <- readxl::excel_sheets(input_FWC_data)
 
-for(n in names_fut){
-  
-  dams_fut <- readxl::read_excel('data/FWC_Dams_Remain_low_med_high_v1.xlsx',sheet = n)[-1,] # first line are all zeroes
+# check RoR dams
+dror <- data.frame(scen = rep(NA,length(names_fut)), no_RoR = rep(NA,length(names_fut)))
+for(i in 1:length(names_fut)){
+  n <- names_fut[i]
+  dams_fut <- readxl::read_excel(input_FWC_data,sheet = n)[-1,] # first line are all zeroes
   
   # convert to spatial points
   sdams_fut <- st_as_sf(dams_fut,coords = c('lon','lat'),crs=4326)
+  sdams_fut$ror <- 0
+  sdams_fut$ror[sdams_fut$SysID_1_DiversionalCanalPower_2_RiverPower_ == 2] <- 1
   
+  # print(n)
+  # print(table(sdams_fut$ror))
+  dror$scen[i] <- n
+  dror$no_RoR[i] <- sum(as.numeric(sdams_fut$ror))
+}
+
+
+for(n in names_fut){
+  
+  dams_fut <- readxl::read_excel(input_FWC_data,sheet = n)[-1,] # first line are all zeroes
+  
+  # convert to spatial points
+  sdams_fut <- st_as_sf(dams_fut,coords = c('lon','lat'),crs=4326)
+  sdams_fut$ror <- 0
+  sdams_fut$ror[sdams_fut$SysID_1_DiversionalCanalPower_2_RiverPower_ == 2] <- 1
   # write for 2050 and 2100 time horizons
   sdams_fut_2050 <- sdams_fut %>% filter(Year <= 2050)
-  st_write(sdams_fut_2050,paste0('proc/dams_future_',n,'_2050.gpkg'))
-  st_write(sdams_fut,paste0('proc/dams_future_',n,'.gpkg'))
+  st_write(sdams_fut_2050,paste0('proc/dams_future_',n,'_2050.gpkg'),delete_dsn = T)
+  st_write(sdams_fut,paste0('proc/dams_future_',n,'.gpkg'),delete_dsn = T)
   
   sdams_fut_hb <- st_intersection(hb_data,sdams_fut)
   sdams_fut_hb_2050 <- st_intersection(hb_data,sdams_fut_2050)
-  saveRDS(sdams_fut_hb_2050 %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),paste0('proc/dams_future_hydrobasins',n,'_2050.rds'))
-  saveRDS(sdams_fut_hb %>% as_tibble() %>% select(HYBAS_ID) %>% distinct(),paste0('proc/dams_future_hydrobasins',n,'.rds'))
+  saveRDS(sdams_fut_hb_2050 %>% as_tibble() %>% select(HYBAS_ID,ror) %>% distinct(),paste0('proc/dams_future_hydrobasins',n,'_2050.rds'))
+  saveRDS(sdams_fut_hb %>% as_tibble() %>% select(HYBAS_ID,ror) %>% distinct(),paste0('proc/dams_future_hydrobasins',n,'.rds'))
   
 }
 

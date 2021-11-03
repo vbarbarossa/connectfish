@@ -1,37 +1,45 @@
-source('R/MASTER.R')
+source('R/MASTER_local.R')
 
 #------------------------------------------------------------
 #> DATA
-dir_ci <- dir_('tabs/species_ci/')
+dir_ci <- valerioUtils::dir_('tabs/FWC/species_ci/')
+dir_proc <- '~/surfdrive/tmp/fwc_proc/'
 
-names_fut <- readxl::excel_sheets('data/FWC_Dams.xlsx')
+names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v1.xlsx')
+names_fut <- c(names_fut,paste0(names_fut,'_2050'))
 
-for(sc in names_fut[1:3]){
+# SPECIE SELECTION----------------------------------------------------------------------------------------------------
+# split the overall CI table based on IUCN species and customRanges
+iucn_ref <- vroom('proc/hybas12_fish.csv',delim=',') %>%
+  select(binomial) %>% distinct()
+# load synonyms table
+synonyms_table <- vroom(list.files(dir_synonyms_table,full.names = T),delim=',') %>%
+  filter(name_iucn %in% iucn_ref$binomial)
+# exclude names in iucn data and names in fishbase that are synonyms for iucn
+iucn_names <- unique(c(iucn_ref$binomial,synonyms_table$name_src))
+
+# exclude exclusively lentic species
+# habitat tables
+# for IUCN
+habitat_iucn <- read.csv(file_iucn_habitat_type)
+
+# for custom ranges
+habitat_custom <- read.csv(file_custom_ranges_habitat_type)
+
+# read specie table with occurrences
+occ_all <- read_sf(file_custom_ranges) %>%
+  as_tibble() %>%
+  select(-geom) 
+
+for(sc in names_fut){
   # computed CI for current and future for each species-basin (data.frame)
   CI_tab <- foreach(cont = c('af','ar','as','au','eu','gr','na','sa','si'),.combine='rbind') %do% {
-    readRDS(paste0('proc/CI_tab_global_',cont,'_',sc,'.rds'))} %>%
+    readRDS(paste0(dir_proc,'CI_tab_global_',cont,'_',sc,'.rds'))} %>%
     filter(alpha == 0.55) %>%
     as_tibble() %>%
     mutate_each(as.numeric, starts_with("connectivity")) %>%
     mutate_each(as.numeric, starts_with("patches"))
   
-  # SPECIE SELECTION----------------------------------------------------------------------------------------------------
-  # split the overall CI table based on IUCN species and customRanges
-  iucn_ref <- vroom('proc/hybas12_fish.csv',delim=',') %>%
-    select(binomial) %>% distinct()
-  # load synonyms table
-  synonyms_table <- vroom(list.files(dir_synonyms_table,full.names = T),delim=',') %>%
-    filter(name_iucn %in% iucn_ref$binomial)
-  # exclude names in iucn data and names in fishbase that are synonyms for iucn
-  iucn_names <- unique(c(iucn_ref$binomial,synonyms_table$name_src))
-  
-  # exclude exclusively lentic species
-  # habitat tables
-  # for IUCN
-  habitat_iucn <- read.csv(file_iucn_habitat_type)
-  
-  # for custom ranges
-  habitat_custom <- read.csv(file_custom_ranges_habitat_type)
   
   # do the filtering
   iucnCI <- CI_tab %>%
@@ -43,16 +51,14 @@ for(sc in names_fut[1:3]){
     filter(!binomial %in% unique(as.character(habitat_custom$name[habitat_custom$OnlyLake == -1]))) #exclude only lentic
   
   # read specie table with occurrences
-  occ <- read_sf(file_custom_ranges) %>%
-    as_tibble() %>%
-    select(-geom) %>%
+  occ <- occ_all %>%
     filter(name %in% customCI$binomial) # filter out species already covered in the IUCN dataset
   
   # tables creation---------------------------------------------------------------------------------------------------
   
-  comparetab <- list()
-  g = 1
-  for(oth in c(1,5,10,20,30,50,10**9)){
+  # comparetab <- list()
+  # g = 1
+  for(oth in c(10)){
     
     names_out <- occ$name[occ$no_occ < oth]
     
@@ -98,25 +104,25 @@ for(sc in names_fut[1:3]){
       )
     
     write.csv(summary,paste0(dir_ci,'species_ci_summary_oth',oth,'_',sc,'.csv'),row.names = F)
-    
-    comparetab[[g]] <- data.frame(
-      oth = oth,
-      diad_n = summary$n[1],
-      diad_ci_c = summary$ci_cur_meanW[1],
-      diad_ci_f = summary$ci_fut_meanW[1],
-      pota_n = summary$n[2],
-      pota_ci_c = summary$ci_cur_meanW[2],
-      pota_ci_f = summary$ci_fut_meanW[2]
-      
-    )
-    
-    g = g+1
+    # 
+    # comparetab[[g]] <- data.frame(
+    #   oth = oth,
+    #   diad_n = summary$n[1],
+    #   diad_ci_c = summary$ci_cur_meanW[1],
+    #   diad_ci_f = summary$ci_fut_meanW[1],
+    #   pota_n = summary$n[2],
+    #   pota_ci_c = summary$ci_cur_meanW[2],
+    #   pota_ci_f = summary$ci_fut_meanW[2]
+    #   
+    # )
+    # 
+    # g = g+1
     
   }
   
-  comparetab <- do.call('rbind',comparetab)
+  # comparetab <- do.call('rbind',comparetab)
   
-  write.csv(comparetab,paste0('tabs/compare_CI_different_oth_',sc,'.csv'),row.names = F)
+  # write.csv(comparetab,paste0('tabs/compare_CI_different_oth_',sc,'.csv'),row.names = F)
   
 }
 

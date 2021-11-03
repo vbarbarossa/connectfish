@@ -244,13 +244,16 @@ dams_cur <- readRDS('proc/dams_current_hydrobasins.rds') %>%
 
 # future dams
 # names_fut <- gsub('.csv','',list.files('~/data/DAMS/IWC_project/IWC2_Remain_HE_SP/'))
-names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v1.xlsx')
+names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v2.xlsx')
 
 for(nf in names_fut){
   
   # future dams
   dams_fut <- readRDS(paste0('proc/dams_future_hydrobasins',nf,'_2050.rds')) %>%
-    filter(HYBAS_ID %in% hb_data$HYBAS_ID)
+    filter(HYBAS_ID %in% hb_data$HYBAS_ID) %>%
+    filter(ror == 0) %>%
+    select(-ror) %>%
+    distinct()
   
   # execution in parallel---------------------------------------------------------------------------------------------
   # split basins in NC groups and equally assign to groups based on area

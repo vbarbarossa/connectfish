@@ -1,7 +1,12 @@
 #Valerio Barbarossa, 29 Sep 2019
 # script that produces tables used for figures
 
-source('R/MASTER.R')
+source('R/MASTER_local.R')
+
+dir_proc <- '~/surfdrive/tmp/fwc_proc/'
+
+names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v1.xlsx')
+names_fut <- c(names_fut,paste0(names_fut,'_2050'))
 
 oth <- 10
 FFR <- FALSE
@@ -11,38 +16,37 @@ FFR <- FALSE
 hb_simple <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combine = 'rbind') %do% read_sf(paste0(dir_hybas12,'/hybas_',i,'_lev12_v1c.shp')) %>% 
   as_tibble() %>% select(HYBAS_ID,MAIN_BAS,SUB_AREA)
 
-names_fut <- readxl::excel_sheets('data/FWC_Dams.xlsx')
+# load fishbase metadata
+fishbase <- species(fields = c('Species','AnaCat')) %>% # get species table for all species
+  rename(binomial = Species)
+fishbase$AnaCat <- as.factor(fishbase$AnaCat)
+levels(fishbase$AnaCat) <- c(rep('Diad.',23),'Non.','Ocea.','Ocea.','Pota.','Pota.')
 
-for(sc in names_fut[1:3]){
+sp_data_all <- bind_rows(
+  # read hybas12 on IUCN
+  vroom('proc/hybas12_fish.csv',delim=','),
+  # read hybas12 on customRanges
+  vroom(paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),delim=',')
+)
+
+for(sc in names_fut){
   
   # results used to filter names from 'clean_and_check.R'
-  sp_reference <- read.csv(paste0('tabs/species_ci/species_ci_oth',oth,'_',sc,'.csv')) %>%
+  sp_reference <- read.csv(paste0('tabs/FWC/species_ci/species_ci_oth',oth,'_',sc,'.csv')) %>%
     as_tibble()
   
   # CI data
   
   CI_tab <- foreach(cont = c('af','ar','as','au','eu','gr','na','sa','si'),.combine='rbind') %do% {
-    readRDS(paste0('proc/CI_tab_global_',cont,'_',sc,'.rds'))} %>%
+    readRDS(paste0(dir_proc,'CI_tab_global_',cont,'_',sc,'.rds'))} %>%
     filter(alpha == 0.55) %>%
     as_tibble() %>%
     mutate_each(as.numeric, starts_with("connectivity")) %>%
     mutate_each(as.numeric, starts_with("patches")) %>%
     filter(binomial %in% as.character(sp_reference$binomial))
   
-  # load fishbase metadata
-  fishbase <- species(fields = c('Species','AnaCat')) %>% # get species table for all species
-    rename(binomial = Species)
-  fishbase$AnaCat <- as.factor(fishbase$AnaCat)
-  levels(fishbase$AnaCat) <- c(rep('Diad.',13),'Non.','Ocea.','Ocea.','Pota.','Pota.')
-  
-  
   # species on HB
-  sp_data <- bind_rows(
-    # read hybas12 on IUCN
-    vroom('proc/hybas12_fish.csv',delim=','),
-    # read hybas12 on customRanges
-    vroom(paste0('proc/hybas12_fish_custom_ranges_occth',min_no_occ,'.csv'),delim=',')
-  ) %>%
+  sp_data <- sp_data_all %>%
     filter(binomial %in% as.character(sp_reference$binomial)) %>%
     inner_join(.,hb_simple, by = 'HYBAS_ID') %>%
     inner_join(.,CI_tab,by = c('binomial','MAIN_BAS'))
