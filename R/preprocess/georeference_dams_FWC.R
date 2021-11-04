@@ -63,7 +63,7 @@ for(n in names_fut){
   # convert to spatial points
   sdams_fut <- st_as_sf(dams_fut,coords = c('lon','lat'),crs=4326)
   sdams_fut$ror <- 0
-  sdams_fut$ror[sdams_fut$SysID_1_DiversionalCanalPower_2_RiverPower_ == 2] <- 1
+  sdams_fut$ror[sdams_fut$SysID_1_DiversionalCanalPower_2_RiverPower_ == 2] <- 1 # <<<< mistake, should equal 1, correct in modelling
   # write for 2050 and 2100 time horizons
   sdams_fut_2050 <- sdams_fut %>% filter(Year <= 2050)
   st_write(sdams_fut_2050,paste0('proc/dams_future_',n,'_2050.gpkg'),delete_dsn = T)

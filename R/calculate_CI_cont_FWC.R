@@ -251,7 +251,7 @@ for(nf in names_fut){
   # future dams
   dams_fut <- readRDS(paste0('proc/dams_future_hydrobasins',nf,'.rds')) %>%
     filter(HYBAS_ID %in% hb_data$HYBAS_ID) %>%
-    filter(ror == 0) %>%
+    filter(ror == 1) %>%  # 1 = dams with reservoir
     select(-ror) %>%
     distinct()
   
