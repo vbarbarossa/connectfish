@@ -3,7 +3,7 @@
 #SBATCH -n 24
 #SBATCH -t 1-00:00:00
 #SBATCH -p "cpu-medium"
-#SBATCH --output=sh/calculate_CI_cont_FWC_%a.out
+#SBATCH --output=sh/calculate_CI_cont_FWC_2050_%a.out
 #SBATCH --mail-type=END
 #SBATCH --mail-user=v.barbarossa@cml.leidenuniv.nl
 
