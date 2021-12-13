@@ -3,9 +3,9 @@
 
 source('R/MASTER_local.R')
 
-dir_proc <- '~/surfdrive/tmp/fwc_proc/'
+dir_proc <- '~/surfdrive/tmp/fwc_proc2/'
 
-names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v1.xlsx')
+names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v2.xlsx')
 names_fut <- c(names_fut,paste0(names_fut,'_2050'))
 
 oth <- 10
@@ -17,6 +17,7 @@ hb_simple <- foreach(i = c('af','ar','as','au','eu','gr','na','sa','si'),.combin
   as_tibble() %>% select(HYBAS_ID,MAIN_BAS,SUB_AREA)
 
 # load fishbase metadata
+# <<<<<<<<<<<<<<<<<<<<<<<<<<< always check if categories are the same
 fishbase <- species(fields = c('Species','AnaCat')) %>% # get species table for all species
   rename(binomial = Species)
 fishbase$AnaCat <- as.factor(fishbase$AnaCat)

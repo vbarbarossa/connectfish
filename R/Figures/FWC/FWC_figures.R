@@ -1,9 +1,9 @@
 source('R/MASTER_local.R')
 
-names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v1.xlsx')
+names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v2.xlsx')
 names_fut <- c(names_fut,paste0(names_fut,'_2050'))
 
-dir_proc <- '~/surfdrive/tmp/fwc_proc/'
+dir_proc <- '~/surfdrive/tmp/fwc_proc2/'
 
 area_threshold <- 2000
 
@@ -46,11 +46,19 @@ t <- foreach(sc = names_fut,.combine = 'rbind') %do% {
     }
   }
   s <- read_sf(paste0(dir_proc,'dams_future_',sc,'.gpkg')) %>%
-    select(geom) %>%
+    select(geom,ror) %>%
     mutate(scenario = scn, year = yr, ambition = amb, rcp = rcp)
+  
+  nd <- s %>% as_tibble %>% group_by(ror) %>% summarise(no=n())
+  no_dams_res <- nd$no[nd$ror == 1]
+  no_dams_ror <- nd$no[nd$ror == 0]
+  
+  if(length(no_dams_res) == 0) no_dams_res <- 0
+  if(length(no_dams_ror) == 0) no_dams_ror <- 0
+  
   return(
     s %>%
-      mutate(no_dams = nrow(s))
+      mutate(no_dams = nrow(s), no_dams_res = no_dams_res, no_dams_ror = no_dams_ror)
   )
 }
 
@@ -58,21 +66,33 @@ t$scenario <- as.factor(t$scenario)
 t$year <- as.factor(t$year)
 t$ambition <- as.factor(t$ambition)
 t$rcp <- as.factor(t$rcp)
-levels(t$ambition) <- c('High','Low','Medium')
-t$ambition <- factor(t$ambition, levels = c('Low','Medium','High'))
+levels(t$rcp) <- c('2.6','2.6(RE)','6.0')
+levels(t$ambition) <- paste0(c('High','Low','Medium'),' policy')
+t$ambition <- factor(t$ambition, levels = paste0(c('Low','Medium','High'),' policy'))
 
-tann <- t %>% as_tibble() %>% select(-geom) %>% distinct()
+tann <- t %>% as_tibble() %>% select(-geom,-ror) %>% distinct()
+t$ror <- as.factor(t$ror)
 p <- ggplot() +
   geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
   geom_sf(data = graticules, fill = NA, color = "grey80", lwd = 0.1) +
   geom_sf(data = world, fill = "grey90", lwd = NA) +
-  geom_sf(data = t,size = .5,shape = 20,alpha = 0.5) +
+  geom_sf(data = t,aes(color = ror),size = .5,shape = 20,alpha = 0.5) +
   # annotate(data = tann, geom = 'Text',label = no_dams, size = 4, x = 0, y = 0) +
   geom_text(
     data    = tann,
-    mapping = aes(x = -Inf, y = -Inf, label = no_dams)
+    mapping = aes(x = -Inf, y = -Inf, label = no_dams_res)
     ,hjust   = -0.1,
-    vjust   = -0.1
+    vjust   = -1.5,
+    color = colorRampPalette(brewer.pal(9, "PiYG"))(3)[c(1)]
+  ) +
+  geom_text(
+    data    = tann,
+    mapping = aes(x = -Inf, y = -Inf, label = no_dams_ror)
+    ,hjust   = -0.1,
+    vjust   = -0.1,
+    color = colorRampPalette(brewer.pal(9, "PiYG"))(3)[c(3)]
+  ) +
+  scale_color_manual(values = colorRampPalette(brewer.pal(9, "PiYG"))(3)[c(3,1)]
   ) +
   xlab('') + ylab('') +
   # scale_fill_manual(values = c('white','red')) +
@@ -127,19 +147,20 @@ t$scenario <- as.factor(t$scenario)
 t$year <- as.factor(t$year)
 t$ambition <- as.factor(t$ambition)
 t$rcp <- as.factor(t$rcp)
+levels(t$rcp) <- c('2.6','2.6(RE)','6.0')
 levels(t$ambition) <- c('High','Low','Medium')
 t$ambition <- factor(t$ambition, levels = c('High','Medium','Low'))
 
 
 library(RColorBrewer)
 p <- ggplot(t,aes(y = delta, x = rcp, fill = ambition)) +
-  geom_bar(stat='identity',position = 'identity',width = 0.5) + #position = 'identity',
+  geom_bar(stat='identity',position = 'dodge',width = 0.9) + #position = 'identity',
   scale_fill_manual(values = colorRampPalette(brewer.pal(9, "PiYG"))(40)[c(40,30,1)]
                     # ,labels = c(expression('1.5'^o*C),expression('2.0'^o*C),expression('3.2'^o*C),expression('4.5'^o*C))
   ) +
   # scale_y_continuous(breaks = seq(0,1,0.25),labels = seq(0,1,0.25)) +
   # guides(fill = guide_legend(title=NULL)) +
-  ylab('Delta fragmentation') +
+  ylab('Delta fragmentation (CI present - CI future) [%]') +
   xlab('') +
   coord_flip(expand = F) + #ylim = c(0,1.0001)
   facet_grid(type ~ year,scales = 'free_y',space = 'free_y',switch = 'y') +
@@ -214,6 +235,7 @@ t$scenario <- as.factor(t$scenario)
 t$year <- as.factor(t$year)
 t$ambition <- as.factor(t$ambition)
 t$rcp <- as.factor(t$rcp)
+levels(t$rcp) <- c('2.6','2.6(RE)','6.0')
 levels(t$ambition) <- c('High','Low','Medium')
 t$ambition <- factor(t$ambition, levels = c('Low','Medium','High'))
 
@@ -247,8 +269,15 @@ ggsave(paste0('figs/FWC_maps_CI_BAS_mean.jpg'),p,
        width = 300,height = 300,units = 'mm',dpi = 600)
 
 
-
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ends here for now <<<<<<<<<<<<<<<<<<<<
+
+
+
+
+
+
+
+
 
 
 # get area info

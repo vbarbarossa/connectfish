@@ -3,9 +3,9 @@ source('R/MASTER_local.R')
 #------------------------------------------------------------
 #> DATA
 dir_ci <- valerioUtils::dir_('tabs/FWC/species_ci/')
-dir_proc <- '~/surfdrive/tmp/fwc_proc/'
+dir_proc <- '~/surfdrive/tmp/fwc_proc2/'
 
-names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v1.xlsx')
+names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v2.xlsx')
 names_fut <- c(names_fut,paste0(names_fut,'_2050'))
 
 # SPECIE SELECTION----------------------------------------------------------------------------------------------------
