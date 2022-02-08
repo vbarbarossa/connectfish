@@ -3,9 +3,10 @@
 
 source('R/MASTER_local.R')
 
-dir_proc <- '~/surfdrive/tmp/fwc_proc2/'
+dir_proc <- '~/surfdrive/tmp/connectfish_fwc_proc_20220207/'
 
-names_fut <- readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v2.xlsx')
+names_fut <- c(readxl::excel_sheets('data/FWC_Dams_Remain_low_med_high_v2.xlsx'),
+               readxl::excel_sheets('data/FWC_Dams_Remain_additional_HE_SP_v2.xlsx'))
 names_fut <- c(names_fut,paste0(names_fut,'_2050'))
 
 oth <- 10
