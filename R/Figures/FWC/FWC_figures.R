@@ -259,18 +259,19 @@ levels(t$rcp) <- c('2.6','2.6(RE)','6.0')
 t$ambition <- factor(t$ambition,levels = c('base','low','medium','high','half-earth','shared-planet'))
 
 t$value_adj <- t$value
-t$value_adj[t$value > 10] <- 15
+t$value_adj[t$value > 10] <- 12.5
 
 p <- ggplot() +
   geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
   geom_sf(data = graticules, fill = NA, color = "grey80", lwd = 0.1) +
   geom_sf(data = world, fill = "grey90", lwd = 0) +
-  geom_sf(data = t %>% filter(year == 2050 & Area > 1000000), aes(fill = value_adj), lwd = 0) +
+  geom_sf(data = t %>% filter(year == 2050), aes(fill = value_adj), lwd = 0) +
   scale_fill_viridis_c(
-    breaks = seq(0,100,10),
-    labels = seq(0,100,10),
+    breaks = c(seq(0,10,2.5),12.5),
+    labels = c(seq(0,10,2.5),'>10'),
     # limits = c(0,100),
-    option = 'C',na.value = "grey90") +
+    direction = 1,
+    option = 'H',na.value = "grey90") +
   coord_sf(crs = crs_custom) +
   facet_grid(ambition ~ rcp) +
   theme_minimal() +
@@ -289,3 +290,33 @@ p <- ggplot() +
 ggsave(paste0('figs/FWC_CI_BAS_mean_2050.jpg'),p,
        width = 300,height = 300,units = 'mm',dpi = 600)
 
+p <- ggplot() +
+  geom_sf(data = bb, fill = NA, color = "grey80", lwd = 0.1) +
+  geom_sf(data = graticules, fill = NA, color = "grey80", lwd = 0.1) +
+  geom_sf(data = world, fill = "grey90", lwd = 0) +
+  geom_sf(data = t %>% filter(year == 2100), aes(fill = value_adj), lwd = 0) +
+  scale_fill_viridis_c(
+    breaks = c(seq(0,10,2.5),12.5),
+    labels = c(seq(0,10,2.5),'>10'),
+    # limits = c(0,100),
+    direction = 1,
+    option = 'H',na.value = "grey90") +
+  coord_sf(crs = crs_custom) +
+  facet_grid(ambition ~ rcp) +
+  theme_minimal() +
+  theme(text = element_text(size = 15),
+        panel.grid.major = element_line(color=NA),
+        axis.text = element_blank(),
+        legend.position = 'bottom',
+        legend.key.width = unit(8,'line'),
+        strip.background = element_rect('white'),
+        strip.background.x = element_blank(),
+        strip.background.y = element_blank(),
+        strip.text = element_text(angle = 0, vjust = -1),
+        legend.title = element_blank()
+  )
+# p
+ggsave(paste0('figs/FWC_CI_BAS_mean_2100.jpg'),p,
+       width = 300,height = 300,units = 'mm',dpi = 600)
+
+write_sf(t,'tabs/FWC/CI_basins_maj2000km2_average.gpkg')
